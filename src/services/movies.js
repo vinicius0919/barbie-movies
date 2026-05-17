@@ -44,3 +44,22 @@ export async function deleteMovie(id) {
 
   return response.data;
 }
+
+export async function getFavorites() {
+  const response = await api.get(
+    "/api/movies/favorites/list"
+  );
+
+  return response.data;
+}
+
+export async function toggleFavorite(
+  id
+) {
+  const response =
+    await api.patch(
+      `/api/movies/${id}/favorite`
+    );
+
+  return response.data;
+}
