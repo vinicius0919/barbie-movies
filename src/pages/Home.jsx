@@ -1,16 +1,31 @@
-import { movies } from "../data/movies";
+import { useEffect, useState } from "react";
+
+import { getMovies } from "../services/movies";
+
 import MovieCard from "../components/MovieCard";
 
 export default function Home() {
-  return (
-    <div className="container">
-      <h1>Biblioteca Barbie</h1>
+  const [movies, setMovies] =
+    useState([]);
 
-      <div className="movies-grid">
-        {movies.map((movie) => (
-          <MovieCard key={movie.id} movie={movie} />
-        ))}
-      </div>
+  useEffect(() => {
+    async function loadMovies() {
+      const data = await getMovies();
+
+      setMovies(data);
+    }
+
+    loadMovies();
+  }, []);
+
+  return (
+    <div className="movies-grid">
+      {movies.map((movie) => (
+        <MovieCard
+          key={movie.id}
+          movie={movie}
+        />
+      ))}
     </div>
   );
 }
