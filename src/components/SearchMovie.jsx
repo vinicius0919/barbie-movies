@@ -1,67 +1,156 @@
 import { useState } from "react";
 
-import { searchTmdb, addMovie } from "../services/movies";
+import { searchTmdb } from "../services/tmdb";
 
-export default function SearchMovie() {
-  const [query, setQuery] = useState("");
+import { addMovie } from "../services/movies";
 
-  const [results, setResults] = useState([]);
+export default function SearchMovie({
+  onMovieAdded,
+}) {
+  const [query, setQuery] =
+    useState("");
 
-  const [videoUrl, setVideoUrl] = useState("");
+  const [results, setResults] =
+    useState([]);
+
+  const [videoUrl, setVideoUrl] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(false);
 
   async function handleSearch() {
-    const data = await searchTmdb(query);
+    if (!query) return;
 
-    setResults(data);
+    try {
+      setLoading(true);
+
+      const data =
+        await searchTmdb(query);
+
+      setResults(data);
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        "Erro ao buscar filmes"
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleAdd(movie) {
     try {
+      if (!videoUrl) {
+        return alert(
+          "Informe a URL do vídeo"
+        );
+      }
+
       await addMovie({
         tmdbId: movie.id,
+
         title: movie.title,
-        overview: movie.overview,
-        poster: "https://image.tmdb.org/t/p/w500" + movie.poster_path,
-        backdrop: "https://image.tmdb.org/t/p/original" + movie.backdrop_path,
-        year: movie.release_date?.split("-")[0],
+
+        overview:
+          movie.overview,
+
+        poster:
+          "https://image.tmdb.org/t/p/w500" +
+          movie.poster_path,
+
+        backdrop:
+          "https://image.tmdb.org/t/p/original" +
+          movie.backdrop_path,
+
+        year:
+          movie.release_date?.split(
+            "-"
+          )[0],
+
         videoUrl,
       });
 
       alert("Filme adicionado");
-    } catch (error) {
-      console.log(error.response.data);
 
-      alert(error.response.data.error);
+      setVideoUrl("");
+
+      setQuery("");
+
+      setResults([]);
+
+      if (onMovieAdded) {
+        onMovieAdded();
+      }
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        error.response?.data
+          ?.error ||
+          "Erro ao adicionar filme"
+      );
     }
   }
 
   return (
     <div>
-      <input
-        placeholder="Buscar filme"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+          marginBottom: 24,
+        }}
+      >
+        <input
+          placeholder="Buscar filme"
+          value={query}
+          onChange={(e) =>
+            setQuery(e.target.value)
+          }
+        />
 
-      <button onClick={handleSearch}>Buscar</button>
+        <button
+          onClick={handleSearch}
+        >
+          {loading
+            ? "Buscando..."
+            : "Buscar"}
+        </button>
 
-      <input
-        placeholder="Link do vídeo"
-        value={videoUrl}
-        onChange={(e) => setVideoUrl(e.target.value)}
-      />
+        <input
+          placeholder="Link do vídeo"
+          value={videoUrl}
+          onChange={(e) =>
+            setVideoUrl(
+              e.target.value
+            )
+          }
+        />
+      </div>
 
-      <div>
+      <div className="search-results">
         {results.map((movie) => (
-          <div key={movie.id}>
+          <div
+            className="search-card"
+            key={movie.id}
+          >
             <img
-              width={120}
-              src={`https://image.tmdb.org/t/p/w200${movie.poster_path}`}
+              src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
+              alt={movie.title}
             />
 
             <h3>{movie.title}</h3>
 
-            <button onClick={() => handleAdd(movie)}>Adicionar</button>
+            <button
+              onClick={() =>
+                handleAdd(movie)
+              }
+            >
+              Adicionar
+            </button>
           </div>
         ))}
       </div>

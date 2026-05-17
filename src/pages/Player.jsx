@@ -1,42 +1,68 @@
 import { useEffect, useState } from "react";
 
-import { useParams } from "react-router-dom";
+import {
+  Link,
+  useParams,
+} from "react-router-dom";
 
-import { getMovies } from "../services/movies";
+import { getMovie } from "../services/movies";
 
 export default function Player() {
   const { id } = useParams();
 
-  const [movie, setMovie] = useState(null);
+  const [movie, setMovie] = useState(
+    null
+  );
 
   useEffect(() => {
     async function loadMovie() {
-      const movies = await getMovies();
+      try {
+        const data = await getMovie(id);
 
-      const selected = movies.find((m) => m.id === Number(id));
-
-      setMovie(selected);
+        setMovie(data);
+      } catch (error) {
+        console.error(error);
+      }
     }
 
     loadMovie();
   }, [id]);
 
   if (!movie) {
-    return <h1>Carregando...</h1>;
+    return <p>Carregando...</p>;
   }
 
   return (
-    <div>
-      <h1>{movie.title}</h1>
+    <div className="player-page">
+      <div className="video-container">
+        <Link
+          to="/"
+          className="back-button"
+        >
+          ← Voltar
+        </Link>
 
-      <video controls autoPlay width="100%">
-        <source
-          src={`${
-            import.meta.env.VITE_API_URL
-          }/api/stream?url=${encodeURIComponent(movie.videoUrl)}`}
-          type="video/mp4"
-        />
-      </video>
+        <video controls>
+          <source
+            src={`${import.meta.env.VITE_API_URL}/api/stream?url=${encodeURIComponent(movie.videoUrl)}`}
+            type="video/mp4"
+          />
+        </video>
+      </div>
+
+      <div className="movie-details">
+        <h1>{movie.title}</h1>
+
+        <div className="movie-meta">
+          <span>{movie.year}</span>
+        </div>
+
+        <p
+          style={{ marginTop: 20 }}
+        >
+          {movie.overview}
+        </p>
+      </div>
     </div>
   );
 }

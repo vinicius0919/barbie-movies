@@ -1,4 +1,4 @@
-import { api } from "./api";
+import api from "./api";
 
 export async function getMovies() {
   const response = await api.get(
@@ -8,9 +8,9 @@ export async function getMovies() {
   return response.data;
 }
 
-export async function searchTmdb(query) {
+export async function getMovie(id) {
   const response = await api.get(
-    `/api/tmdb/search?query=${query}`
+    `/api/movies/${id}`
   );
 
   return response.data;
@@ -25,7 +25,19 @@ export async function addMovie(movie) {
   return response.data;
 }
 
-export async function removeMovie(id) {
+export async function updateMovie(
+  id,
+  movie
+) {
+  const response = await api.put(
+    `/api/movies/${id}`,
+    movie
+  );
+
+  return response.data;
+}
+
+export async function deleteMovie(id) {
   const response = await api.delete(
     `/api/movies/${id}`
   );

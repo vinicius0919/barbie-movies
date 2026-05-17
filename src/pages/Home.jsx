@@ -1,31 +1,40 @@
 import { useEffect, useState } from "react";
 
-import { getMovies } from "../services/movies";
-
 import MovieCard from "../components/MovieCard";
 
+import { getMovies } from "../services/movies";
+
 export default function Home() {
-  const [movies, setMovies] =
-    useState([]);
+  const [movies, setMovies] = useState(
+    []
+  );
 
   useEffect(() => {
     async function loadMovies() {
-      const data = await getMovies();
+      try {
+        const data = await getMovies();
 
-      setMovies(data);
+        setMovies(data);
+      } catch (error) {
+        console.error(error);
+      }
     }
 
     loadMovies();
   }, []);
 
   return (
-    <div className="movies-grid">
-      {movies.map((movie) => (
-        <MovieCard
-          key={movie.id}
-          movie={movie}
-        />
-      ))}
+    <div className="container">
+      <h1>Filmes</h1>
+
+      <div className="movies-grid">
+        {movies.map((movie) => (
+          <MovieCard
+            key={movie._id}
+            movie={movie}
+          />
+        ))}
+      </div>
     </div>
   );
 }
