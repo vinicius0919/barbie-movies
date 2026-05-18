@@ -17,13 +17,44 @@ import {
   Star,
   Volume2,
 } from "lucide-react";
-
+import { toggleFavorite } from "../services/movies";
 import { getMovie } from "../services/movies";
 
 export default function Player() {
   const { id } = useParams();
 
   const [movie, setMovie] = useState(null);
+
+  const [favorite, setFavorite] =
+    useState(false);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  async function handleFavorite(
+    e
+  ) {
+    e.preventDefault();
+
+    e.stopPropagation();
+
+    try {
+      setLoading(true);
+
+      const updatedMovie =
+        await toggleFavorite(
+          movie._id
+        );
+
+      setFavorite(
+        updatedMovie.favorite
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const [isLoading, setIsLoading] =
     useState(true);
@@ -43,6 +74,7 @@ export default function Player() {
         const data = await getMovie(id);
 
         setMovie(data);
+        setFavorite(movie.favorite)
       } catch (error) {
         console.error(error);
       } finally {
@@ -158,6 +190,45 @@ export default function Player() {
     );
   }
 
+  async function handleWatchNow() {
+    const video = videoRef.current;
+
+    if (!video) return;
+
+    try {
+      /* PLAY */
+
+      await video.play();
+
+      /* FULLSCREEN */
+
+      if (
+        document.fullscreenElement == null
+      ) {
+        if (video.requestFullscreen) {
+          await video.requestFullscreen();
+        } else if (
+          video.webkitEnterFullscreen
+        ) {
+          /* iPhone Safari */
+          video.webkitEnterFullscreen();
+        }
+      }
+
+      /* SCROLL SUAVE ATÉ O PLAYER */
+
+      video.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    } catch (error) {
+      console.error(
+        "Erro ao iniciar vídeo:",
+        error
+      );
+    }
+  }
+
   return (
     <div className="player-page">
       <div className="player-backdrop">
@@ -237,12 +308,26 @@ export default function Player() {
                   <Clock3 size={16} />
                   2h 14m
                 </span>
+
+                <button
+                  className="favorite-button"
+                  onClick={
+                    handleFavorite
+                  }
+                  disabled={loading}
+                >
+                  <Heart
+                    size={20}
+                    fill={
+                      favorite
+                        ? "red"
+                        : "none"
+                    }
+                  />
+                </button>
               </div>
             </div>
 
-            <button className="favorite-action">
-              <Heart size={18} />
-            </button>
           </div>
 
           <p className="player-description">
@@ -250,7 +335,10 @@ export default function Player() {
           </p>
 
           <div className="player-actions">
-            <button className="watch-button">
+            <button
+              className="watch-button"
+              onClick={handleWatchNow}
+            >
               <Play size={18} />
               Assistir agora
             </button>
