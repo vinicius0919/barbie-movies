@@ -1,5 +1,5 @@
 import { Menu } from "lucide-react";
-
+import Miq from "./../assets/fada.png"
 export default function Navbar({
   toggleSidebar,
 }) {
@@ -12,9 +12,17 @@ export default function Navbar({
         <Menu size={28} />
       </button>
 
-      <h1 className="logo">
-        Barbie Stream
-      </h1>
+      <div className="logo-wrapper">
+        <img
+          src={Miq}
+          alt=""
+          className="MiqFace"
+        />
+
+        <h1 className="logo">
+          MiFlix
+        </h1>
+      </div>
     </header>
   );
 }

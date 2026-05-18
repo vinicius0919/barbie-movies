@@ -8,6 +8,7 @@ export default function Layout({ children }) {
     useState(false);
 
   function toggleSidebar() {
+    console.log(sidebarOpen)
     setSidebarOpen(!sidebarOpen);
   }
 
