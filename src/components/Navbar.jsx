@@ -20,7 +20,7 @@ export default function Navbar({
         />
 
         <h1 className="logo">
-          MiFlix
+          MiqFlix
         </h1>
       </div>
     </header>
