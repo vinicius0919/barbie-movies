@@ -13,10 +13,10 @@ export default function Favorites() {
   useEffect(() => {
     async function loadFavorites() {
       try {
-        const data =
+        const response =
           await getFavorites();
 
-        setMovies(data);
+        setMovies(response.data);
       } catch (error) {
         console.error(error);
       } finally {

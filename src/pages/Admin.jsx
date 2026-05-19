@@ -1,4 +1,7 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import SearchMovie from "../components/SearchMovie";
 import MovieForm from "../components/MovieForm";
@@ -11,25 +14,63 @@ import {
 } from "../services/movies";
 
 export default function Admin() {
-  const [movies, setMovies] = useState(
-    []
-  );
+  const [movies, setMovies] =
+    useState([]);
+
+  const [page, setPage] =
+    useState(1);
+
+  const [hasMore, setHasMore] =
+    useState(true);
+
+  const [loading, setLoading] =
+    useState(false);
 
   const [editingMovie, setEditingMovie] =
     useState(null);
 
-  async function loadMovies() {
-    try {
-      const data = await getMovies();
+  const [searching, setSearching] =
+    useState(false);
 
-      setMovies(data);
+  async function loadMovies(
+    currentPage = 1,
+    reset = false
+  ) {
+    if (loading) return;
+
+    try {
+      setLoading(true);
+
+      const response =
+        await getMovies(
+          currentPage,
+          20
+        );
+
+      if (reset) {
+        setMovies(
+          response.data
+        );
+      } else {
+        setMovies((prev) => [
+          ...prev,
+          ...response.data,
+        ]);
+      }
+
+      setHasMore(
+        response.pagination
+          .hasNextPage
+      );
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    loadMovies();
+    loadMovies(1, true);
   }, []);
 
   async function handleDelete(id) {
@@ -42,7 +83,12 @@ export default function Admin() {
     try {
       await deleteMovie(id);
 
-      loadMovies();
+      setMovies((prev) =>
+        prev.filter(
+          (movie) =>
+            movie._id !== id
+        )
+      );
     } catch (error) {
       console.error(error);
     }
@@ -50,14 +96,21 @@ export default function Admin() {
 
   async function handleUpdate(data) {
     try {
-      await updateMovie(
-        editingMovie._id,
-        data
+      const updated =
+        await updateMovie(
+          editingMovie._id,
+          data
+        );
+
+      setMovies((prev) =>
+        prev.map((movie) =>
+          movie._id === updated._id
+            ? updated
+            : movie
+        )
       );
 
       setEditingMovie(null);
-
-      loadMovies();
     } catch (error) {
       console.error(error);
 
@@ -67,12 +120,33 @@ export default function Admin() {
     }
   }
 
+  function handleLoadMore() {
+    const nextPage =
+      page + 1;
+
+    setPage(nextPage);
+
+    loadMovies(nextPage);
+  }
+
   return (
     <div className="container">
       <h1>Painel Admin</h1>
 
       <SearchMovie
-        onMovieAdded={loadMovies}
+        movies={movies}
+        onMovieAdded={() =>
+          loadMovies(1, true)
+        }
+        onEdit={
+          setEditingMovie
+        }
+        onDelete={
+          handleDelete
+        }
+        onSearching={
+          setSearching
+        }
       />
 
       {editingMovie && (
@@ -96,11 +170,41 @@ export default function Admin() {
         </div>
       )}
 
-      <MovieList
-        movies={movies}
-        onEdit={setEditingMovie}
-        onDelete={handleDelete}
-      />
+      {!searching && (
+        <>
+          <MovieList
+            movies={movies}
+            onEdit={
+              setEditingMovie
+            }
+            onDelete={
+              handleDelete
+            }
+          />
+
+          {hasMore && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent:
+                  "center",
+                marginTop: 24,
+              }}
+            >
+              <button
+                onClick={
+                  handleLoadMore
+                }
+                disabled={loading}
+              >
+                {loading
+                  ? "Carregando..."
+                  : "Carregar mais"}
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

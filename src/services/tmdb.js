@@ -1,3 +1,4 @@
+// front-end services/tmdb.js
 const TOKEN =
   import.meta.env.VITE_TMDB_TOKEN;
 
@@ -8,37 +9,56 @@ const BASE_URL =
    SEARCH MOVIES
 ===================================== */
 
-export async function searchTmdb(
-  query
-) {
-  try {
-    const response = await fetch(
-      `${BASE_URL}/search/movie?query=${encodeURIComponent(
-        query
-      )}&language=pt-BR`,
-      {
-        headers: {
-          Authorization: `Bearer ${TOKEN}`,
+import api from "./api";
 
-          "Content-Type":
-            "application/json",
+export async function searchTmdb(
+  query,
+  page = 1
+) {
+  const response =
+    await api.get(
+      `/api/tmdb/search`,
+      {
+        params: {
+          query,
+          page,
         },
       }
     );
 
-    const data =
-      await response.json();
-
-    return data.results || [];
-  } catch (error) {
-    console.error(
-      "Erro TMDB:",
-      error
-    );
-
-    return [];
-  }
+  return response.data;
 }
+// export async function searchTmdb(
+//   query
+// ) {
+//   try {
+//     const response = await fetch(
+//       `${BASE_URL}/search/movie?query=${encodeURIComponent(
+//         query
+//       )}&language=pt-BR`,
+//       {
+//         headers: {
+//           Authorization: `Bearer ${TOKEN}`,
+
+//           "Content-Type":
+//             "application/json",
+//         },
+//       }
+//     );
+
+//     const data =
+//       await response.json();
+
+//     return data.results || [];
+//   } catch (error) {
+//     console.error(
+//       "Erro TMDB:",
+//       error
+//     );
+
+//     return [];
+//   }
+// }
 
 /* =====================================
    GET MOVIE DETAILS

@@ -1,8 +1,19 @@
 import api from "./api";
 
-export async function getMovies() {
+export async function getMovies(
+  page = 1,
+  limit = 20,
+  search = ""
+) {
   const response = await api.get(
-    "/api/movies"
+    "/api/movies",
+    {
+      params: {
+        page,
+        limit,
+        search,
+      },
+    }
   );
 
   return response.data;
@@ -45,9 +56,18 @@ export async function deleteMovie(id) {
   return response.data;
 }
 
-export async function getFavorites() {
+export async function getFavorites(
+  page = 1,
+  limit = 20
+) {
   const response = await api.get(
-    "/api/movies/favorites/list"
+    "/api/movies/favorites/list",
+    {
+      params: {
+        page,
+        limit,
+      },
+    }
   );
 
   return response.data;
