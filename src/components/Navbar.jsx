@@ -1,4 +1,4 @@
-import "./Navbar.css"
+import "./Navbar.css";
 
 import {
   Menu,
@@ -36,38 +36,44 @@ export default function Navbar({
 
   return (
     <header className="navbar">
-      <button
-        className="menu-button"
-        onClick={toggleSidebar}
-      >
-        <Menu size={28} />
-      </button>
+      {/* TOPO */}
+      <div className="row navbar-top">
+        <button
+          className="menu-button"
+          onClick={toggleSidebar}
+        >
+          <Menu size={28} />
+        </button>
 
-      <div className="logo-wrapper">
-        <img
-          src={Miq}
-          alt=""
-          className="MiqFace"
-        />
+        <div className="logo-wrapper">
+          <img
+            src={Miq}
+            alt=""
+            className="MiqFace"
+          />
 
-        <h1 className="logo">
-          MiqFlix
-        </h1>
+          <h1 className="logo">
+            MiqFlix
+          </h1>
+        </div>
       </div>
 
-      <div className="search-box">
-        <Search size={18} />
+      {/* SEARCH */}
+      <div className="row navbar-search">
+        <div className="search-box">
+          <Search size={18} />
 
-        <input
-          type="text"
-          placeholder="Buscar filmes..."
-          value={value}
-          onChange={(e) =>
-            setValue(
-              e.target.value
-            )
-          }
-        />
+          <input
+            type="text"
+            placeholder="Buscar filmes..."
+            value={value}
+            onChange={(e) =>
+              setValue(
+                e.target.value
+              )
+            }
+          />
+        </div>
       </div>
     </header>
   );

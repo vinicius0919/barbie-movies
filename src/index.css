@@ -81,274 +81,6 @@ body {
   min-height: 100vh;
 }
 
-/* NAVBAR */
-
-.navbar {
-  position: fixed;
-
-  top: 0;
-  left: 0;
-
-  width: 100%;
-  height: 68px;
-
-  background: rgba(10, 10, 13, 0.82);
-
-  backdrop-filter: blur(16px);
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  padding: 0 18px;
-
-  z-index: 1000;
-
-  border-bottom:
-    1px solid rgba(255, 255, 255, 0.05);
-}
-
-.navbar-left {
-  display: flex;
-
-  align-items: center;
-
-  gap: 18px;
-}
-
-/* LOGO WRAPPER */
-
-.logo-wrapper {
-  position: relative;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  width: fit-content;
-}
-
-/* LOGO */
-
-.logo {
-  position: relative;
-  margin: 0;
-  z-index: 2;
-}
-
-/* FAIRY */
-
-.MiqFace {
-  position: absolute;
-
-  width: 24px;
-
-  z-index: 3;
-
-  pointer-events: none;
-
-  filter:
-    drop-shadow(0 0 10px rgba(255, 120, 200, 0.45));
-
-  animation:
-    fairyOrbit 6s linear infinite,
-    fairyPulse 1s ease-in-out infinite;
-}
-
-/* ÓRBITA */
-
-@keyframes fairyOrbit {
-
-  0% {
-    transform:
-      translate(58px, 0px)
-      rotate(0deg);
-  }
-
-  12.5% {
-    transform:
-      translate(40px, -12px)
-      rotate(4deg);
-  }
-
-  25% {
-    transform:
-      translate(0px, -16px)
-      rotate(8deg);
-  }
-
-  37.5% {
-    transform:
-      translate(-40px, -12px)
-      rotate(4deg);
-  }
-
-  50% {
-    transform:
-      translate(-58px, 0px)
-      rotate(0deg);
-  }
-
-  62.5% {
-    transform:
-      translate(-40px, 12px)
-      rotate(-4deg);
-  }
-
-  75% {
-    transform:
-      translate(0px, 16px)
-      rotate(-8deg);
-  }
-
-  87.5% {
-    transform:
-      translate(40px, 12px)
-      rotate(-4deg);
-  }
-
-  100% {
-    transform:
-      translate(80px, -2px)
-      rotate(0deg);
-  }
-}
-
-/* RESPIRAÇÃO */
-
-@keyframes fairyPulse {
-
-  0%,
-  100% {
-    scale: 1;
-  }
-
-  50% {
-    scale: 1.08;
-  }
-}
-
-/* MENU BUTTON */
-
-.menu-button,
-.icon-button {
-  background: transparent;
-
-  border: none;
-
-  color: var(--text);
-
-  cursor: pointer;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  box-shadow: none;
-}
-
-.menu-button:hover,
-.icon-button:hover {
-  transform: scale(1.05);
-
-  background: transparent;
-}
-
-/* SIDEBAR */
-
-.sidebar {
-  position: fixed;
-
-  top: 0;
-  left: -280px;
-
-  width: 280px;
-
-  height: 100vh;
-
-  background:
-    linear-gradient(to bottom,
-      #14141b,
-      #101015);
-
-  z-index: 1100;
-
-  transition: var(--transition);
-
-  padding: 22px;
-
-  border-right:
-    1px solid var(--border);
-
-  backdrop-filter: blur(18px);
-}
-
-.sidebar.open {
-  left: 0;
-}
-
-.sidebar-overlay {
-  position: fixed;
-
-  inset: 0;
-
-  background:
-    rgba(0, 0, 0, 0.65);
-
-  backdrop-filter: blur(2px);
-
-  z-index: 1050;
-}
-
-.sidebar-header {
-  display: flex;
-
-  justify-content: space-between;
-
-  align-items: center;
-
-  margin-bottom: 36px;
-}
-
-.sidebar nav {
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 10px;
-}
-
-.sidebar-link {
-  display: flex;
-
-  align-items: center;
-
-  gap: 12px;
-
-  text-decoration: none;
-
-  color: var(--text);
-
-  padding: 14px 16px;
-
-  border-radius: 14px;
-
-  transition: var(--transition);
-
-  font-weight: 500;
-}
-
-.sidebar-link:hover {
-  background: var(--primary-soft);
-
-  color: white;
-}
 
 /* MAIN */
 
@@ -565,8 +297,7 @@ h2 {
   object-fit: cover;
 
   filter:
-    blur(28px)
-    saturate(120%);
+    blur(28px) saturate(120%);
 
   transform: scale(1.08);
 }
@@ -579,11 +310,9 @@ h2 {
   z-index: -2;
 
   background:
-    linear-gradient(
-      to bottom,
+    linear-gradient(to bottom,
       rgba(10, 10, 13, 0.45),
-      rgba(10, 10, 13, 0.98)
-    );
+      rgba(10, 10, 13, 0.98));
 }
 
 /* =========================================
@@ -671,8 +400,7 @@ h2 {
   display: grid;
 
   grid-template-columns:
-    minmax(0, 1.45fr)
-    minmax(340px, 0.55fr);
+    minmax(0, 1.45fr) minmax(340px, 0.55fr);
 
   gap: 28px;
 
@@ -769,11 +497,9 @@ h2 {
   border-radius: 999px;
 
   background:
-    linear-gradient(
-      to right,
+    linear-gradient(to right,
       var(--primary),
-      #ff84b2
-    );
+      #ff84b2);
 
   box-shadow:
     0 0 16px rgba(255, 79, 139, 0.45);
@@ -914,11 +640,9 @@ h2 {
   border-radius: 16px;
 
   background:
-    linear-gradient(
-      to right,
+    linear-gradient(to right,
       var(--primary),
-      #ff72aa
-    );
+      #ff72aa);
 
   color: white;
 
@@ -1056,6 +780,11 @@ video:-webkit-full-screen {
 }
 
 @media (max-width: 768px) {
+
+  .main-content {
+    padding:
+      122px 24px 32px;
+  }
 
   .player-page {
     padding:
