@@ -380,7 +380,7 @@ export default function Player() {
               }
             >
               <source
-                src={`${import.meta.env.VITE_API_URL}/api/stream?url=${encodeURIComponent(movie.videoUrl)}`}
+                src={`${import.meta.env.VITE_API_URL}/api/stream?page=${encodeURIComponent(movie.videoUrl)}`}
                 type="video/mp4"
               />
             </video>

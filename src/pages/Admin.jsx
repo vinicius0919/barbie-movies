@@ -150,24 +150,13 @@ export default function Admin() {
       />
 
       {editingMovie && (
-        <div
-          style={{
-            marginTop: 40,
-            marginBottom: 40,
-          }}
-        >
-          <h2>
-            Editando filme
-          </h2>
-
-          <MovieForm
-            movie={editingMovie}
-            onSave={handleUpdate}
-            onCancel={() =>
-              setEditingMovie(null)
-            }
-          />
-        </div>
+        <MovieForm
+          movie={editingMovie}
+          onSave={handleUpdate}
+          onCancel={() =>
+            setEditingMovie(null)
+          }
+        />
       )}
 
       {!searching && (
