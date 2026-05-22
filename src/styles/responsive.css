@@ -1,0 +1,15 @@
+.container{
+  padding: 0;
+}
+
+@media (max-width: 1024px) {
+  .container {
+    padding-inline: 18px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding-inline: 14px;
+  }
+}

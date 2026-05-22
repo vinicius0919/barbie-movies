@@ -1,16 +1,32 @@
+// Home.jsx
+
+import "./Home.css";
+
 import {
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
-import MovieCard from "../components/MovieCard";
+import MovieRow from "../components/MovieRow";
+import HeroBanner from "../components/HeroBanner";
 
 import { getMovies } from "../services/movies";
 
 import { useSearch } from "../context/SearchContext";
 
+const GENRE_ROWS = [
+  "Animação",
+  "Comédia",
+  "Romance",
+  "Fantasia",
+];
+
 export default function Home() {
-  const [movies, setMovies] =
+  const [baseRows, setBaseRows] =
+    useState([]);
+
+  const [extraRows, setExtraRows] =
     useState([]);
 
   const [page, setPage] =
@@ -22,40 +38,100 @@ export default function Home() {
   const [hasMore, setHasMore] =
     useState(true);
 
-  const { search } =
-    useSearch();
+  const {
+    search,
+    genreFilter,
+  } = useSearch();
 
-  async function loadMovies(
-    currentPage = 1,
-    reset = false
-  ) {
-    if (loading) return;
+  /* =========================================
+     LOAD INITIAL
+  ========================================= */
 
+  async function loadInitialMovies() {
     try {
       setLoading(true);
 
       const response =
         await getMovies(
-          currentPage,
+          1,
           20,
-          search
+          search,
+          genreFilter
         );
 
-      if (reset) {
-        setMovies(
-          response.data
-        );
-      } else {
-        setMovies((prev) => [
-          ...prev,
-          ...response.data,
-        ]);
-      }
+      const movies =
+        response.data || [];
+
+      setPage(1);
 
       setHasMore(
         response.pagination
-          .hasNextPage
+          ?.hasNextPage || false
       );
+
+      /* =========================================
+         CATEGORY ROWS
+      ========================================= */
+
+      const usedMovies =
+        new Set();
+
+      const rows =
+        GENRE_ROWS.map(
+          (genre) => {
+            const genreMovies =
+              movies.filter(
+                (movie) => {
+                  const hasGenre =
+                    movie.genres?.includes(
+                      genre
+                    );
+
+                  const alreadyUsed =
+                    usedMovies.has(
+                      movie._id
+                    );
+
+                  if (
+                    hasGenre &&
+                    !alreadyUsed
+                  ) {
+                    usedMovies.add(
+                      movie._id
+                    );
+
+                    return true;
+                  }
+
+                  return false;
+                }
+              );
+
+            return {
+              id: genre,
+              title: genre,
+              movies:
+                genreMovies,
+            };
+          }
+        ).filter(
+          (row) =>
+            row.movies.length > 0
+        );
+
+      setBaseRows(rows);
+
+      /* =========================================
+         CONTINUATION ROW
+      ========================================= */
+
+      setExtraRows([
+        {
+          id: "initial-row",
+          title: "",
+          movies,
+        },
+      ]);
     } catch (error) {
       console.error(error);
     } finally {
@@ -63,55 +139,151 @@ export default function Home() {
     }
   }
 
-  useEffect(() => {
-    setPage(1);
+  /* =========================================
+     LOAD MORE
+  ========================================= */
 
-    loadMovies(1, true);
-  }, [search]);
+  async function handleLoadMore() {
+    if (loading || !hasMore)
+      return;
 
-  function handleLoadMore() {
-    const nextPage =
-      page + 1;
+    try {
+      setLoading(true);
 
-    setPage(nextPage);
+      const nextPage =
+        page + 1;
 
-    loadMovies(nextPage);
+      const response =
+        await getMovies(
+          nextPage,
+          20,
+          search,
+          genreFilter
+        );
+
+      const movies =
+        response.data || [];
+
+      setPage(nextPage);
+
+      setHasMore(
+        response.pagination
+          ?.hasNextPage || false
+      );
+
+      setExtraRows((prev) => [
+        ...prev,
+        {
+          id: `page-${nextPage}`,
+          title: "",
+          movies,
+        },
+      ]);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  return (
-    <div className="container">
-      <h1>Filmes</h1>
+  /* =========================================
+     RELOAD
+  ========================================= */
 
-      <div className="movies-grid">
-        {movies.map((movie) => (
-          <MovieCard
-            key={movie._id}
-            movie={movie}
+  useEffect(() => {
+    loadInitialMovies();
+  }, [search, genreFilter]);
+
+  /* =========================================
+     ALL MOVIES
+  ========================================= */
+
+  const allMovies = useMemo(() => {
+    return [
+      ...baseRows.flatMap(
+        (row) => row.movies
+      ),
+
+      ...extraRows.flatMap(
+        (row) => row.movies
+      ),
+    ];
+  }, [baseRows, extraRows]);
+
+  /* =========================================
+     FEATURED
+  ========================================= */
+
+  const featuredMovie =
+    allMovies[0];
+
+  /* =========================================
+     EMPTY
+  ========================================= */
+
+  if (
+    !loading &&
+    allMovies.length === 0
+  ) {
+    return (
+      <main className="container">
+        <div className="home-empty">
+          <p>
+            Nenhum filme encontrado.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  /* =========================================
+     RENDER
+  ========================================= */
+
+  return (
+    <main className="container">
+      {featuredMovie && (
+        <HeroBanner
+          movies={allMovies}
+        />
+      )}
+
+      <div className="home-content">
+        {baseRows.map((row) => (
+          <MovieRow
+            key={row.id}
+            title={row.title}
+            movies={row.movies}
+          />
+        ))}
+
+        {extraRows.map((row) => (
+          <MovieRow
+            key={row.id}
+            title=""
+            movies={row.movies}
           />
         ))}
       </div>
 
-      {hasMore && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent:
-              "center",
-            marginTop: "24px",
-          }}
-        >
+      {loading && (
+        <div className="home-loading">
+          <div className="home-loader" />
+        </div>
+      )}
+
+      {hasMore && !loading && (
+        <div className="load-more-wrapper">
           <button
+            className="load-more-button"
             onClick={
               handleLoadMore
             }
-            disabled={loading}
           >
-            {loading
-              ? "Carregando..."
-              : "Carregar mais"}
+            Carregar mais
           </button>
         </div>
       )}
-    </div>
+    </main>
   );
 }

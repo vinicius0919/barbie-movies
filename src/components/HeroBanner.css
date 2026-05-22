@@ -1,0 +1,519 @@
+.hero {
+  position: relative;
+
+  width: 100%;
+  height: 82vh;
+  min-height: 620px;
+
+  overflow: hidden;
+
+  background: #000;
+}
+
+/* =========================================
+   SLIDES
+========================================= */
+
+.hero-slide {
+  position: absolute;
+  inset: 0;
+
+  opacity: 0;
+  visibility: hidden;
+
+  transition:
+    opacity 0.8s ease,
+    visibility 0.8s ease;
+}
+
+.hero-slide.active {
+  opacity: 1;
+  visibility: visible;
+  z-index: 2;
+}
+
+/* =========================================
+   BACKDROP
+========================================= */
+
+.hero-backdrop {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  animation:
+    heroZoom 10s ease-in-out infinite alternate;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+
+  background:
+    linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.96) 5%,
+      rgba(0, 0, 0, 0.7) 36%,
+      rgba(0, 0, 0, 0.3) 62%,
+      rgba(0, 0, 0, 0.15) 100%
+    );
+}
+
+/* =========================================
+   CONTENT
+========================================= */
+
+.hero-content {
+  position: relative;
+  z-index: 3;
+
+  width: 100%;
+  max-width: 760px;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+
+  gap: 18px;
+
+  padding:
+    120px
+    64px
+    84px;
+}
+
+.hero-top {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* =========================================
+   BADGE
+========================================= */
+
+.hero-badge {
+  width: fit-content;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 8px 14px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 0, 119, 0.16);
+
+  border: 1px solid
+    rgba(255, 0, 119, 0.22);
+
+  backdrop-filter: blur(12px);
+
+  color: #fff;
+
+  font-size: 0.82rem;
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+}
+
+/* =========================================
+   META
+========================================= */
+
+.hero-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 10px;
+
+  min-height: 32px;
+}
+
+.hero-meta span {
+  padding: 7px 12px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 255, 255, 0.08);
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.06);
+
+  color: rgba(255, 255, 255, 0.92);
+
+  font-size: 0.82rem;
+  font-weight: 600;
+
+  backdrop-filter: blur(10px);
+}
+
+/* =========================================
+   TITLE
+========================================= */
+
+.hero-content h1 {
+  margin: 0;
+
+  font-size:
+    clamp(2.5rem, 5vw, 5rem);
+
+  font-weight: 900;
+
+  line-height: 1.02;
+
+  letter-spacing: -2px;
+
+  color: #fff;
+
+  text-shadow:
+    0 12px 30px
+      rgba(0, 0, 0, 0.45);
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+
+  overflow: hidden;
+}
+
+/* =========================================
+   DESCRIPTION
+========================================= */
+
+.hero-content p {
+  margin: 0;
+
+  max-width: 680px;
+
+  font-size: 1.02rem;
+  line-height: 1.75;
+
+  color:
+    rgba(255, 255, 255, 0.82);
+
+  text-shadow:
+    0 4px 16px
+      rgba(0, 0, 0, 0.4);
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+
+  overflow: hidden;
+}
+
+/* =========================================
+   ACTIONS
+========================================= */
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 14px;
+
+  margin-top: 8px;
+}
+
+.hero-button {
+  height: 54px;
+
+  padding: 0 24px;
+
+  border-radius: 18px;
+  border: none;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  font-size: 0.95rem;
+  font-weight: 700;
+
+  text-decoration: none;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.25s ease,
+    opacity 0.25s ease,
+    background 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.hero-button:hover {
+  transform: translateY(-2px);
+}
+
+.hero-button.primary {
+  background:
+    linear-gradient(
+      135deg,
+      #ff006e,
+      #ff4da6
+    );
+
+  color: #fff;
+
+  box-shadow:
+    0 14px 32px
+      rgba(255, 0, 110, 0.32);
+}
+
+.hero-button.primary:hover {
+  box-shadow:
+    0 18px 40px
+      rgba(255, 0, 110, 0.42);
+}
+
+.hero-button.secondary {
+  background:
+    rgba(255, 255, 255, 0.08);
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.08);
+
+  backdrop-filter: blur(12px);
+
+  color: #fff;
+}
+
+/* =========================================
+   NAVIGATION
+========================================= */
+
+.hero-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 10;
+
+  transform: translateY(-50%);
+
+  width: 54px;
+  height: 54px;
+
+  border: none;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background:
+    rgba(0, 0, 0, 0.38);
+
+  color: #fff;
+
+  backdrop-filter: blur(12px);
+
+  cursor: pointer;
+
+  transition:
+    transform 0.25s ease,
+    background 0.25s ease,
+    opacity 0.25s ease;
+}
+
+.hero-nav:hover {
+  transform:
+    translateY(-50%)
+    scale(1.08);
+
+  background:
+    rgba(255, 0, 119, 0.7);
+}
+
+.hero-nav.left {
+  left: 24px;
+}
+
+.hero-nav.right {
+  right: 24px;
+}
+
+/* =========================================
+   INDICATORS
+========================================= */
+
+.hero-indicators {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  z-index: 10;
+
+  transform: translateX(-50%);
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hero-dot {
+  width: 10px;
+  height: 10px;
+
+  border: none;
+  border-radius: 999px;
+
+  background:
+    rgba(255, 255, 255, 0.32);
+
+  cursor: pointer;
+
+  transition:
+    width 0.25s ease,
+    background 0.25s ease,
+    transform 0.25s ease;
+}
+
+.hero-dot.active {
+  width: 34px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #ff006e,
+      #ff4da6
+    );
+}
+
+/* =========================================
+   ANIMATION
+========================================= */
+
+@keyframes heroZoom {
+  from {
+    transform: scale(1.02);
+  }
+
+  to {
+    transform: scale(1.08);
+  }
+}
+
+/* =========================================
+   TABLET
+========================================= */
+
+@media (max-width: 992px) {
+  .hero {
+    height: 74vh;
+  }
+
+  .hero-content {
+    padding:
+      110px
+      40px
+      76px;
+
+    max-width: 680px;
+  }
+
+  .hero-content h1 {
+    font-size:
+      clamp(2rem, 7vw, 4rem);
+  }
+}
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 768px) {
+  .hero {
+    height: 84vh;
+    min-height: 680px;
+  }
+
+  .hero-content {
+    padding:
+      100px
+      20px
+      84px;
+
+    gap: 14px;
+  }
+
+  .hero-content h1 {
+    letter-spacing: -1px;
+  }
+
+  .hero-content p {
+    font-size: 0.94rem;
+    line-height: 1.65;
+
+    -webkit-line-clamp: 4;
+  }
+
+  .hero-actions {
+    width: 100%;
+  }
+
+  .hero-button {
+    flex: 1;
+
+    min-width: 140px;
+
+    height: 50px;
+
+    border-radius: 16px;
+  }
+
+  .hero-nav {
+    width: 42px;
+    height: 42px;
+  }
+
+  .hero-nav.left {
+    left: 10px;
+  }
+
+  .hero-nav.right {
+    right: 10px;
+  }
+}
+
+/* =========================================
+   SMALL MOBILE
+========================================= */
+
+@media (max-width: 480px) {
+  .hero {
+    min-height: 720px;
+  }
+
+  .hero-content {
+    padding:
+      90px
+      16px
+      80px;
+  }
+
+  .hero-meta {
+    gap: 8px;
+  }
+
+  .hero-meta span {
+    font-size: 0.74rem;
+
+    padding: 6px 10px;
+  }
+
+  .hero-indicators {
+    bottom: 20px;
+  }
+}

@@ -1,0 +1,357 @@
+/* =========================================
+   ADMIN PAGE
+========================================= */
+
+.admin-page {
+    width: 100%;
+    min-height: 100vh;
+  
+    padding:
+      clamp(1rem, 3vw, 2rem)
+      clamp(1rem, 4vw, 3rem)
+      4rem;
+  
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  
+    color: #fff;
+  }
+  
+  /* =========================================
+     HEADER
+  ========================================= */
+  
+  .admin-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 2rem;
+  
+    flex-wrap: wrap;
+  }
+  
+  .admin-badge {
+    display: inline-flex;
+    align-items: center;
+  
+    padding:
+      0.5rem 0.9rem;
+  
+    margin-bottom: 1rem;
+  
+    border-radius: 999px;
+  
+    background:
+      rgba(255,255,255,.06);
+  
+    border:
+      1px solid
+      rgba(255,255,255,.08);
+  
+    font-size: .85rem;
+    font-weight: 600;
+  
+    color:
+      rgba(255,255,255,.8);
+  
+    backdrop-filter: blur(12px);
+  }
+  
+  .admin-header h1 {
+    font-size:
+      clamp(2rem, 4vw, 3.5rem);
+  
+    line-height: 1.05;
+    font-weight: 800;
+  
+    margin-bottom: .8rem;
+  
+    letter-spacing: -0.03em;
+  }
+  
+  .admin-header p {
+    max-width: 650px;
+  
+    color:
+      rgba(255,255,255,.7);
+  
+    line-height: 1.7;
+  
+    font-size:
+      clamp(.95rem, 1vw, 1.05rem);
+  }
+  
+  /* =========================================
+     STATS
+  ========================================= */
+  
+  .admin-stats {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .admin-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  
+    min-width: 180px;
+  
+    padding:
+      1rem 1.2rem;
+  
+    border-radius: 24px;
+  
+    background:
+      rgba(255,255,255,.05);
+  
+    border:
+      1px solid
+      rgba(255,255,255,.06);
+  
+    backdrop-filter: blur(18px);
+  }
+  
+  .admin-stat-card strong {
+    display: block;
+  
+    font-size: 1.4rem;
+    font-weight: 800;
+  }
+  
+  .admin-stat-card span {
+    color:
+      rgba(255,255,255,.65);
+  
+    font-size: .92rem;
+  }
+  
+  /* =========================================
+     FORM WRAPPER
+  ========================================= */
+  
+  .admin-form-wrapper {
+    width: 100%;
+  
+    padding:
+      clamp(1rem, 2vw, 1.5rem);
+  
+    border-radius: 30px;
+  
+    background:
+      rgba(255,255,255,.04);
+  
+    border:
+      1px solid
+      rgba(255,255,255,.06);
+  
+    backdrop-filter: blur(18px);
+  }
+  
+  /* =========================================
+     MOVIE LIST
+  ========================================= */
+  
+  .admin-list-wrapper {
+    width: 100%;
+  }
+  
+  /* =========================================
+     EMPTY
+  ========================================= */
+  
+  .admin-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  
+    gap: 1rem;
+  
+    padding:
+      5rem 2rem;
+  
+    border-radius: 32px;
+  
+    text-align: center;
+  
+    background:
+      rgba(255,255,255,.04);
+  
+    border:
+      1px solid
+      rgba(255,255,255,.05);
+  }
+  
+  .admin-empty h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+  }
+  
+  .admin-empty p {
+    color:
+      rgba(255,255,255,.65);
+  }
+  
+  /* =========================================
+     LOAD MORE
+  ========================================= */
+  
+  .admin-load-more {
+    display: flex;
+    justify-content: center;
+  
+    margin-top: 1rem;
+  }
+  
+  .admin-load-more button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .8rem;
+  
+    min-width: 220px;
+    min-height: 56px;
+  
+    padding:
+      0 2rem;
+  
+    border: none;
+    border-radius: 18px;
+  
+    background:
+      linear-gradient(
+        135deg,
+        #ff003c,
+        #ff4d6d
+      );
+  
+    color: #fff;
+  
+    font-size: 1rem;
+    font-weight: 700;
+  
+    cursor: pointer;
+  
+    transition:
+      transform .25s ease,
+      opacity .25s ease,
+      box-shadow .25s ease;
+  
+    box-shadow:
+      0 12px 30px
+      rgba(255,0,60,.3);
+  }
+  
+  .admin-load-more button:hover {
+    transform: translateY(-3px);
+  
+    box-shadow:
+      0 18px 40px
+      rgba(255,0,60,.4);
+  }
+  
+  .admin-load-more button:disabled {
+    opacity: .7;
+    cursor: not-allowed;
+  }
+  
+  /* =========================================
+     LOADING
+  ========================================= */
+  
+  .admin-loading {
+    min-height: 100vh;
+  
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  
+    gap: 1rem;
+  
+    color: #fff;
+  }
+  
+  .spin {
+    animation:
+      spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  /* =========================================
+     FIXES
+  ========================================= */
+  
+  .admin-page,
+  .admin-page * {
+    min-width: 0;
+  }
+  
+  /* =========================================
+     RESPONSIVE
+  ========================================= */
+  
+  @media (max-width: 1024px) {
+    .admin-header {
+      flex-direction: column;
+    }
+  
+    .admin-stats {
+      width: 100%;
+    }
+  
+    .admin-stat-card {
+      width: 100%;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .admin-page {
+      padding:
+        1rem
+        1rem
+        3rem;
+    }
+  
+    .admin-header h1 {
+      font-size: 2.4rem;
+    }
+  
+    .admin-form-wrapper {
+      border-radius: 24px;
+    }
+  
+    .admin-empty {
+      border-radius: 24px;
+    }
+  
+    .admin-load-more button {
+      width: 100%;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .admin-header h1 {
+      font-size: 2rem;
+    }
+  
+    .admin-empty {
+      padding:
+        4rem 1.2rem;
+    }
+  
+    .admin-load-more button {
+      min-height: 52px;
+  
+      border-radius: 16px;
+  
+      font-size: .95rem;
+    }
+  }

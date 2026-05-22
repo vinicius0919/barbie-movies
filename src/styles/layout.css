@@ -1,0 +1,9 @@
+.main-layout {
+    width: 100%;
+    min-height: 100vh;
+    padding-bottom: 1rem;
+  }
+/*   
+  .main-content {
+    padding-top: calc(var(--navbar-height) + 24px);
+  } */

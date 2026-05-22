@@ -1,7 +1,15 @@
+import "./Admin.css";
+
 import {
   useEffect,
   useState,
+  useCallback,
 } from "react";
+
+import {
+  Film,
+  Loader2,
+} from "lucide-react";
 
 import SearchMovie from "../components/SearchMovie";
 import MovieForm from "../components/MovieForm";
@@ -32,46 +40,60 @@ export default function Admin() {
   const [searching, setSearching] =
     useState(false);
 
-  async function loadMovies(
-    currentPage = 1,
-    reset = false
-  ) {
-    if (loading) return;
+  const [initialLoading, setInitialLoading] =
+    useState(true);
 
-    try {
-      setLoading(true);
+  /* =========================================
+     LOAD MOVIES
+  ========================================= */
 
-      const response =
-        await getMovies(
-          currentPage,
-          20
-        );
+  const loadMovies =
+    useCallback(
+      async (
+        currentPage = 1,
+        reset = false
+      ) => {
+        if (loading) return;
 
-      if (reset) {
-        setMovies(
-          response.data
-        );
-      } else {
-        setMovies((prev) => [
-          ...prev,
-          ...response.data,
-        ]);
-      }
+        try {
+          setLoading(true);
 
-      setHasMore(
-        response.pagination
-          .hasNextPage
-      );
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }
+          const response =
+            await getMovies(
+              currentPage,
+              20
+            );
+
+          setMovies((prev) =>
+            reset
+              ? response.data
+              : [
+                  ...prev,
+                  ...response.data,
+                ]
+          );
+
+          setHasMore(
+            response.pagination
+              .hasNextPage
+          );
+        } catch (error) {
+          console.error(error);
+        } finally {
+          setLoading(false);
+          setInitialLoading(false);
+        }
+      },
+      [loading]
+    );
 
   useEffect(() => {
     loadMovies(1, true);
   }, []);
+
+  /* =========================================
+     DELETE
+  ========================================= */
 
   async function handleDelete(id) {
     const confirmDelete = confirm(
@@ -93,6 +115,10 @@ export default function Admin() {
       console.error(error);
     }
   }
+
+  /* =========================================
+     UPDATE
+  ========================================= */
 
   async function handleUpdate(data) {
     try {
@@ -120,6 +146,10 @@ export default function Admin() {
     }
   }
 
+  /* =========================================
+     LOAD MORE
+  ========================================= */
+
   function handleLoadMore() {
     const nextPage =
       page + 1;
@@ -129,9 +159,64 @@ export default function Admin() {
     loadMovies(nextPage);
   }
 
+  /* =========================================
+     LOADING
+  ========================================= */
+
+  if (initialLoading) {
+    return (
+      <div className="admin-loading">
+        <Loader2
+          size={42}
+          className="spin"
+        />
+
+        <p>
+          Carregando painel...
+        </p>
+      </div>
+    );
+  }
+
+  /* =========================================
+     RENDER
+  ========================================= */
+
   return (
-    <div className="container">
-      <h1>Painel Admin</h1>
+    <section className="admin-page">
+      <div className="admin-header">
+        <div>
+          <span className="admin-badge">
+            Dashboard
+          </span>
+
+          <h1>
+            Painel Admin
+          </h1>
+
+          <p>
+            Gerencie filmes,
+            favoritos e catálogo
+            da plataforma.
+          </p>
+        </div>
+
+        <div className="admin-stats">
+          <div className="admin-stat-card">
+            <Film size={20} />
+
+            <div>
+              <strong>
+                {movies.length}
+              </strong>
+
+              <span>
+                Filmes
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <SearchMovie
         movies={movies}
@@ -150,50 +235,71 @@ export default function Admin() {
       />
 
       {editingMovie && (
-        <MovieForm
-          movie={editingMovie}
-          onSave={handleUpdate}
-          onCancel={() =>
-            setEditingMovie(null)
-          }
-        />
+        <div className="admin-form-wrapper">
+          <MovieForm
+            movie={editingMovie}
+            onSave={handleUpdate}
+            onCancel={() =>
+              setEditingMovie(null)
+            }
+          />
+        </div>
       )}
 
       {!searching && (
         <>
-          <MovieList
-            movies={movies}
-            onEdit={
-              setEditingMovie
-            }
-            onDelete={
-              handleDelete
-            }
-          />
+          {movies.length === 0 ? (
+            <div className="admin-empty">
+              <Film size={44} />
+
+              <h2>
+                Nenhum filme
+                encontrado
+              </h2>
+
+              <p>
+                Adicione novos filmes
+                ao catálogo.
+              </p>
+            </div>
+          ) : (
+            <div className="admin-list-wrapper">
+              <MovieList
+                movies={movies}
+                onEdit={
+                  setEditingMovie
+                }
+                onDelete={
+                  handleDelete
+                }
+              />
+            </div>
+          )}
 
           {hasMore && (
-            <div
-              style={{
-                display: "flex",
-                justifyContent:
-                  "center",
-                marginTop: 24,
-              }}
-            >
+            <div className="admin-load-more">
               <button
                 onClick={
                   handleLoadMore
                 }
                 disabled={loading}
               >
-                {loading
-                  ? "Carregando..."
-                  : "Carregar mais"}
+                {loading ? (
+                  <>
+                    <Loader2
+                      size={18}
+                      className="spin"
+                    />
+                    Carregando...
+                  </>
+                ) : (
+                  "Carregar mais"
+                )}
               </button>
             </div>
           )}
         </>
       )}
-    </div>
+    </section>
   );
 }

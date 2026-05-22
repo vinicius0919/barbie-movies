@@ -22,6 +22,8 @@ export default function Navbar({
 }) {
   const {
     setSearch,
+    genreFilter,
+    setGenreFilter,
   } = useSearch();
 
   const [value, setValue] =
@@ -60,6 +62,36 @@ export default function Navbar({
 
       {/* SEARCH */}
       <div className="row navbar-search">
+        <select
+          className="genre-select"
+          value={genreFilter}
+          onChange={(e) =>
+            setGenreFilter(
+              e.target.value
+            )
+          }
+        >
+          <option value="">
+            Todos
+          </option>
+
+          <option value="Animação">
+            Animação
+          </option>
+
+          <option value="Comédia">
+            Comédia
+          </option>
+
+          <option value="Romance">
+            Romance
+          </option>
+
+          <option value="Fantasia">
+            Fantasia
+          </option>
+        </select>
+
         <div className="search-box">
           <Search size={18} />
 

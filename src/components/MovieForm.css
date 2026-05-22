@@ -1,0 +1,269 @@
+/* =========================
+   OVERLAY (PORTAL SAFE)
+========================= */
+
+.movie-form-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 1.5rem;
+
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(10px);
+
+  animation: fadeIn 0.2s ease;
+}
+
+/* =========================
+   MODAL
+========================= */
+
+.movie-form-modal {
+  width: 100%;
+  max-width: 820px;
+  max-height: 92vh;
+
+  overflow-y: auto;
+
+  border-radius: 28px;
+
+  background: linear-gradient(180deg, #17171f, #101014);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+
+  animation: modalUp 0.25s ease;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.movie-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  padding: 1.6rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.movie-form-badge {
+  display: inline-block;
+  padding: 0.4rem 0.75rem;
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.7);
+
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.movie-form-header h2 {
+  margin: 0.5rem 0 0;
+  color: #fff;
+  font-size: clamp(1.4rem, 2vw, 2rem);
+}
+
+/* =========================
+   ICON BUTTONS
+========================= */
+
+.icon-button {
+  width: 44px;
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+  border: none;
+
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.icon-button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* =========================
+   FORM
+========================= */
+
+.movie-form {
+  padding: 1.6rem;
+}
+
+.movie-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-field.full {
+  grid-column: 1 / -1;
+}
+
+label {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+/* =========================
+   INPUTS
+========================= */
+
+input,
+textarea {
+  width: 100%;
+
+  padding: 0.9rem 1rem;
+
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+
+  outline: none;
+}
+
+input:focus,
+textarea:focus {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* =========================
+   GENRES
+========================= */
+
+.genre-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  margin-top: 0.8rem;
+}
+
+.genre-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  padding: 0.4rem 0.7rem;
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+
+  font-size: 0.85rem;
+}
+
+.genre-chip button {
+  background: transparent;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+}
+
+/* =========================
+   ACTIONS
+========================= */
+
+.movie-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+
+  margin-top: 2rem;
+}
+
+.primary-button,
+.secondary-button {
+  padding: 0.9rem 1.4rem;
+  border-radius: 14px;
+
+  border: none;
+  cursor: pointer;
+
+  font-weight: 600;
+}
+
+.primary-button {
+  background: linear-gradient(135deg, #ff004c, #ff4f72);
+  color: #fff;
+}
+
+.secondary-button {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+/* =========================
+   ANIMATIONS
+========================= */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalUp {
+  from {
+    transform: translateY(15px) scale(0.98);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* spinner helper */
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 768px) {
+  .movie-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .movie-form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .primary-button,
+  .secondary-button {
+    width: 100%;
+  }
+}

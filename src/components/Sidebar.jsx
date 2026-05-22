@@ -1,3 +1,5 @@
+import "./Sidebar.css";
+
 import {
   Home,
   Settings,

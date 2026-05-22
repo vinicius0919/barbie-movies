@@ -1,0 +1,253 @@
+/* =========================================
+   HOME PAGE
+========================================= */
+
+.container {
+  width: 100%;
+  min-height: 100vh;
+
+  padding-top: 1rem;
+  padding-bottom: 4rem;
+
+  background: #0b0b0f;
+  color: #fff;
+
+  overflow-x: hidden;
+}
+
+/* =========================================
+   PAGE TITLE
+========================================= */
+
+.container > h1 {
+  padding:
+    1.5rem
+    clamp(1rem, 4vw, 3rem)
+    0;
+
+  font-size:
+    clamp(1.8rem, 4vw, 3rem);
+
+  font-weight: 800;
+  letter-spacing: -0.04em;
+
+  color: #fff;
+}
+
+/* =========================================
+   CONTENT WRAPPER
+========================================= */
+
+.home-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* =========================================
+   MOVIES GRID
+========================================= */
+
+.movies-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      auto-fill,
+      minmax(180px, 1fr)
+    );
+
+  gap: 1.4rem;
+
+  padding:
+    0
+    clamp(1rem, 4vw, 3rem);
+}
+
+/* =========================================
+   LOAD MORE
+========================================= */
+
+.load-more-wrapper {
+  display: flex;
+  justify-content: center;
+
+  padding:
+    2.5rem
+    1rem
+    2.5rem;
+}
+
+.load-more-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 220px;
+  min-height: 56px;
+
+  padding:
+    0 1.6rem;
+
+  border: none;
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff003c,
+      #ff4d6d
+    );
+
+  color: #fff;
+
+  font-size: 1rem;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 12px 30px
+    rgba(255, 0, 60, 0.28);
+
+  transition:
+    transform 0.25s ease,
+    opacity 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.load-more-button:hover {
+  transform: translateY(-3px);
+
+  box-shadow:
+    0 16px 40px
+    rgba(255, 0, 60, 0.35);
+}
+
+.load-more-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+
+  transform: none;
+}
+
+/* =========================================
+   EMPTY STATE
+========================================= */
+
+.home-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 320px;
+
+  padding: 2rem;
+
+  text-align: center;
+
+  color:
+    rgba(255, 255, 255, 0.72);
+
+  font-size: 1.05rem;
+}
+
+/* =========================================
+   LOADING STATE
+========================================= */
+
+.home-loading {
+  display: flex;
+  justify-content: center;
+
+  padding: 3rem 0;
+}
+
+.home-loader {
+  width: 52px;
+  height: 52px;
+
+  border-radius: 50%;
+
+  border:
+    4px solid
+    rgba(255, 255, 255, 0.08);
+
+  border-top-color: #ff003c;
+
+  animation:
+    home-spin 0.8s linear infinite;
+}
+
+@keyframes home-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================================
+   SPACING BETWEEN ROWS
+========================================= */
+
+.movie-row + .movie-row {
+  margin-top: 0.8rem;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 992px) {
+  .movies-grid {
+    grid-template-columns:
+      repeat(
+        auto-fill,
+        minmax(160px, 1fr)
+      );
+  }
+
+  .load-more-button {
+    width: 100%;
+    max-width: 320px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container > h1 {
+    padding-top: 1rem;
+  }
+
+  .movies-grid {
+    gap: 1rem;
+
+    padding:
+      0
+      1rem;
+  }
+
+  .load-more-wrapper {
+    padding-top: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container > h1 {
+    font-size: 2rem;
+  }
+
+  .movies-grid {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+
+    gap: 0.9rem;
+  }
+
+  .load-more-button {
+    min-height: 52px;
+
+    font-size: 0.95rem;
+  }
+}

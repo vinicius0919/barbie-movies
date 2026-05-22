@@ -1,0 +1,12 @@
+.favorites-page {
+    padding-bottom: 80px;
+  }
+  
+  .favorites-grid {
+    display: grid;
+  
+    grid-template-columns:
+      repeat(auto-fill, minmax(190px, 1fr));
+  
+    gap: 22px;
+  }

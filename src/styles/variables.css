@@ -1,0 +1,30 @@
+:root {
+  --bg: #050505;
+  --bg-soft: #0d0d0d;
+
+  --surface: #111111;
+  --surface-2: #181818;
+  --surface-3: #202020;
+
+  --primary: #ff4fa3;
+  --primary-hover: #ff3b95;
+
+  --text: #ffffff;
+  --text-soft: #b3b3b3;
+  --text-muted: #7a7a7a;
+
+  --border: rgba(255,255,255,.08);
+
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 28px;
+
+  --shadow:
+    0 10px 30px rgba(0,0,0,.35);
+
+  --container: 1400px;
+
+  --navbar-height: 72px;
+
+  --transition: 180ms ease;
+}

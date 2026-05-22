@@ -1,3 +1,5 @@
+import "./Player.css";
+
 import {
   useEffect,
   useRef,

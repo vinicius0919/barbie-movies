@@ -1,3 +1,5 @@
+import "./Favorites.css";
+
 import { useEffect, useState } from "react";
 
 import MovieCard from "../components/MovieCard";
@@ -36,11 +38,11 @@ export default function Favorites() {
   }
 
   return (
-    <div className="container">
+    <div className="container favorites-page">
       <h1>Favoritos</h1>
 
       {movies.length === 0 ? (
-        <p>
+        <p className="favorites-empty">
           Nenhum filme favoritado.
         </p>
       ) : (

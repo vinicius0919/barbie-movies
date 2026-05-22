@@ -1,244 +1,224 @@
-import {
-  useEffect,
-  useState,
-} from "react";
+import "./MovieForm.css";
+
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { RefreshCw, X, Plus } from "lucide-react";
+import { refreshMovieFromTMDB } from "../services/movies";
 
 export default function MovieForm({
   movie,
   onSave,
   onCancel,
+  onRefresh,
 }) {
-  const [form, setForm] =
-    useState({
-      title:
-        movie?.title || "",
+  const [form, setForm] = useState({
+    title: "",
+    overview: "",
+    poster: "",
+    backdrop: "",
+    year: "",
+    videoUrl: "",
+    tmdbId: "",
+    genres: [],
+  });
 
-      overview:
-        movie?.overview || "",
-
-      poster:
-        movie?.poster || "",
-
-      backdrop:
-        movie?.backdrop || "",
-
-      year:
-        movie?.year || "",
-
-      videoUrl:
-        movie?.videoUrl || "",
-    });
+  const [genreInput, setGenreInput] = useState("");
+  const [loadingRefresh, setLoadingRefresh] = useState(false);
 
   useEffect(() => {
-    document.body.style.overflow =
-      "hidden";
+    if (movie) {
+      setForm({
+        title: movie.title || "",
+        overview: movie.overview || "",
+        poster: movie.poster || "",
+        backdrop: movie.backdrop || "",
+        year: movie.year || "",
+        videoUrl: movie.videoUrl || "",
+        tmdbId: movie.tmdbId || "",
+        genres: movie.genres || [],
+      });
+    }
+  }, [movie]);
 
-    return () => {
-      document.body.style.overflow =
-        "auto";
-    };
-  }, []);
+  const handleChange = (key, value) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
 
-  function handleChange(e) {
-    setForm({
-      ...form,
-      [e.target.name]:
-        e.target.value,
-    });
-  }
+  const addGenre = () => {
+    const value = genreInput.trim();
+    if (!value || form.genres.includes(value)) return;
 
-  async function handleSubmit(
-    e
-  ) {
+    setForm((prev) => ({
+      ...prev,
+      genres: [...prev.genres, value],
+    }));
+
+    setGenreInput("");
+  };
+
+  const removeGenre = (genre) => {
+    setForm((prev) => ({
+      ...prev,
+      genres: prev.genres.filter((g) => g !== genre),
+    }));
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault();
+    onSave?.(form);
+  };
 
-    await onSave(form);
-  }
+  const handleRefresh = async () => {
+    if (!movie?._id) return;
 
-  return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
+    try {
+      setLoadingRefresh(true);
 
-        background:
-          "rgba(0,0,0,0.7)",
+      const updated = onRefresh
+        ? await onRefresh(movie._id)
+        : await refreshMovieFromTMDB(movie._id);
 
-        display: "flex",
+      if (updated) {
+        setForm((prev) => ({
+          ...prev,
+          ...updated,
+        }));
+      }
+    } finally {
+      setLoadingRefresh(false);
+    }
+  };
 
-        alignItems: "center",
-
-        justifyContent:
-          "center",
-
-        zIndex: 9999,
-
-        padding: 20,
-      }}
-      onClick={onCancel}
-    >
+  const modal = (
+    <div className="movie-form-overlay" onClick={onCancel}>
       <div
-        onClick={(e) =>
-          e.stopPropagation()
-        }
-        style={{
-          width: "100%",
-          maxWidth: 700,
-
-          maxHeight: "90vh",
-
-          overflowY: "auto",
-
-          background: "#111",
-
-          borderRadius: 16,
-
-          padding: 24,
-
-          color: "#fff",
-
-          boxShadow:
-            "0 10px 40px rgba(0,0,0,.4)",
-        }}
+        className="movie-form-modal"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div
-          style={{
-            display: "flex",
+        {/* HEADER */}
+        <div className="movie-form-header">
+          <div>
+            <span className="movie-form-badge">
+              {movie ? "Editar filme" : "Novo filme"}
+            </span>
+            <h2>{form.title || "Filme sem título"}</h2>
+          </div>
 
-            justifyContent:
-              "space-between",
-
-            alignItems:
-              "center",
-
-            marginBottom: 24,
-          }}
-        >
-          <h2
-            style={{
-              margin: 0,
-            }}
-          >
-            Editar Filme
-          </h2>
-
-          <button
-            onClick={onCancel}
-            style={{
-              background:
-                "transparent",
-
-              border: "none",
-
-              color: "#fff",
-
-              fontSize: 24,
-
-              cursor: "pointer",
-            }}
-          >
-            ×
-          </button>
-        </div>
-
-        <form
-          onSubmit={
-            handleSubmit
-          }
-          style={{
-            display: "flex",
-
-            flexDirection:
-              "column",
-
-            gap: 16,
-          }}
-        >
-          <input
-            name="title"
-            placeholder="Título"
-            value={form.title}
-            onChange={
-              handleChange
-            }
-          />
-
-          <input
-            name="year"
-            placeholder="Ano"
-            value={form.year}
-            onChange={
-              handleChange
-            }
-          />
-
-          <input
-            name="poster"
-            placeholder="Poster"
-            value={form.poster}
-            onChange={
-              handleChange
-            }
-          />
-
-          <input
-            name="backdrop"
-            placeholder="Backdrop"
-            value={form.backdrop}
-            onChange={
-              handleChange
-            }
-          />
-
-          <input
-            name="videoUrl"
-            placeholder="URL do vídeo"
-            value={
-              form.videoUrl
-            }
-            onChange={
-              handleChange
-            }
-          />
-
-          <textarea
-            name="overview"
-            placeholder="Descrição"
-            value={
-              form.overview
-            }
-            onChange={
-              handleChange
-            }
-            rows={6}
-          />
-
-          <div
-            style={{
-              display: "flex",
-
-              gap: 12,
-
-              marginTop: 8,
-            }}
-          >
-            <button
-              type="submit"
-            >
-              Salvar
-            </button>
+          <div className="movie-form-actions-header">
+            {movie?.tmdbId && (
+              <button
+                type="button"
+                className="icon-button"
+                onClick={handleRefresh}
+                disabled={loadingRefresh}
+              >
+                <RefreshCw className={loadingRefresh ? "spin" : ""} size={18} />
+              </button>
+            )}
 
             <button
               type="button"
-              onClick={
-                onCancel
-              }
+              className="icon-button"
+              onClick={onCancel}
             >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* FORM */}
+        <form className="movie-form" onSubmit={handleSubmit}>
+          <div className="movie-form-grid">
+            <div className="form-field full">
+              <label>Título</label>
+              <input
+                value={form.title}
+                onChange={(e) => handleChange("title", e.target.value)}
+              />
+            </div>
+
+            <div className="form-field full">
+              <label>Descrição</label>
+              <textarea
+                rows={4}
+                value={form.overview}
+                onChange={(e) => handleChange("overview", e.target.value)}
+              />
+            </div>
+
+            <div className="form-field">
+              <label>Ano</label>
+              <input
+                value={form.year}
+                onChange={(e) => handleChange("year", e.target.value)}
+              />
+            </div>
+
+            <div className="form-field">
+              <label>TMDB ID</label>
+              <input
+                value={form.tmdbId}
+                onChange={(e) => handleChange("tmdbId", e.target.value)}
+              />
+            </div>
+
+            {/* GENRES */}
+            <div className="form-field full">
+              <label>Genres</label>
+
+              <div className="input-wrapper">
+                <input
+                  value={genreInput}
+                  placeholder="Adicionar gênero"
+                  onChange={(e) => setGenreInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addGenre();
+                    }
+                  }}
+                />
+
+                <button type="button" onClick={addGenre}>
+                  <Plus size={16} />
+                </button>
+              </div>
+
+              <div className="genre-list">
+                {form.genres.map((genre) => (
+                  <span key={genre} className="genre-chip">
+                    {genre}
+                    <button type="button" onClick={() => removeGenre(genre)}>
+                      <X size={14} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="form-field full">
+              <label>Video URL</label>
+              <input
+                value={form.videoUrl}
+                onChange={(e) => handleChange("videoUrl", e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* ACTIONS */}
+          <div className="movie-form-actions">
+            <button type="button" className="secondary-button" onClick={onCancel}>
               Cancelar
+            </button>
+
+            <button className="primary-button">
+              Salvar
             </button>
           </div>
         </form>
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }

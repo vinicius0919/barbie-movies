@@ -1,9 +1,16 @@
+// services/movies.js
+
 import api from "./api";
+
+/* =========================================
+   GET ALL
+========================================= */
 
 export async function getMovies(
   page = 1,
   limit = 20,
-  search = ""
+  search = "",
+  genre = ""
 ) {
   const response = await api.get(
     "/api/movies",
@@ -12,12 +19,17 @@ export async function getMovies(
         page,
         limit,
         search,
+        genre,
       },
     }
   );
 
   return response.data;
 }
+
+/* =========================================
+   GET ONE
+========================================= */
 
 export async function getMovie(id) {
   const response = await api.get(
@@ -27,6 +39,10 @@ export async function getMovie(id) {
   return response.data;
 }
 
+/* =========================================
+   CREATE
+========================================= */
+
 export async function addMovie(movie) {
   const response = await api.post(
     "/api/movies",
@@ -35,6 +51,10 @@ export async function addMovie(movie) {
 
   return response.data;
 }
+
+/* =========================================
+   UPDATE
+========================================= */
 
 export async function updateMovie(
   id,
@@ -48,6 +68,10 @@ export async function updateMovie(
   return response.data;
 }
 
+/* =========================================
+   DELETE
+========================================= */
+
 export async function deleteMovie(id) {
   const response = await api.delete(
     `/api/movies/${id}`
@@ -55,6 +79,10 @@ export async function deleteMovie(id) {
 
   return response.data;
 }
+
+/* =========================================
+   FAVORITES
+========================================= */
 
 export async function getFavorites(
   page = 1,
@@ -73,13 +101,24 @@ export async function getFavorites(
   return response.data;
 }
 
-export async function toggleFavorite(
+export async function toggleFavorite(id) {
+  const response = await api.patch(
+    `/api/movies/${id}/favorite`
+  );
+
+  return response.data;
+}
+
+/* =========================================
+   TMDB REFRESH
+========================================= */
+
+export async function refreshMovieFromTMDB(
   id
 ) {
-  const response =
-    await api.patch(
-      `/api/movies/${id}/favorite`
-    );
+  const response = await api.post(
+    `/api/movies/${id}/refresh-tmdb`
+  );
 
   return response.data;
 }

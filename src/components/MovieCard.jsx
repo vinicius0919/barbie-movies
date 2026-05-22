@@ -1,3 +1,5 @@
+import "./MovieCard.css";
+
 import {
   Heart,
   Play,
@@ -48,29 +50,47 @@ export default function MovieCard({
       to={`/movie/${movie._id}`}
       className="movie-card"
     >
-      <img
-        src={movie.poster}
-        alt={movie.title}
-      />
+      <div className="movie-card-poster">
+        <img
+          src={movie.poster}
+          alt={movie.title}
+          loading="lazy"
+        />
 
-      <div className="movie-info">
-        <h2>{movie.title}</h2>
+        <div className="movie-card-overlay">
+          <button className="movie-play-button">
+            <Play size={22} />
+          </button>
+        </div>
+      </div>
+
+      <div className="movie-card-content">
+        <h2 className="movie-title">
+          {movie.title}
+        </h2>
 
         <div className="movie-card-footer">
-          <span>{movie.year}</span>
+          <span className="movie-year">
+            {movie.year}
+          </span>
 
           <button
-            className="favorite-button"
+            className={`favorite-button ${
+              favorite
+                ? "active"
+                : ""
+            }`}
             onClick={
               handleFavorite
             }
             disabled={loading}
+            aria-label="Favoritar filme"
           >
             <Heart
-              size={20}
+              size={18}
               fill={
                 favorite
-                  ? "red"
+                  ? "currentColor"
                   : "none"
               }
             />

@@ -1,0 +1,278 @@
+/* =========================
+   MOVIE ROW
+========================= */
+
+.movie-row {
+  position: relative;
+
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+margin: 0;
+  /* margin-bottom: 64px; */
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.movie-row-header {
+  padding: 0 6vw;
+}
+
+.movie-row-header h2 {
+  font-size: 1.9rem;
+  font-weight: 800;
+
+  color: #ffffff;
+
+  letter-spacing: -0.6px;
+}
+
+/* =========================
+   WRAPPER
+========================= */
+
+.movie-row-wrapper {
+  position: relative;
+}
+
+/* =========================
+   SCROLL AREA
+========================= */
+
+.movie-row-scroll {
+  display: flex;
+  gap: 20px;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  scroll-behavior: smooth;
+
+  padding:
+    10px 6vw 14px;
+
+  scrollbar-width: none;
+
+  -webkit-overflow-scrolling: touch;
+}
+
+.movie-row-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* =========================
+   MODERN ARROWS
+========================= */
+
+.movie-row-arrow {
+  position: absolute;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  width: 62px;
+  height: 62px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 999px;
+
+  background:
+    rgba(15, 15, 15, 0.72);
+
+  backdrop-filter: blur(18px);
+
+  color: #ffffff;
+
+  cursor: pointer;
+
+  z-index: 20;
+
+  opacity: 0;
+
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease,
+    background 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.movie-row-wrapper:hover .movie-row-arrow {
+  opacity: 1;
+}
+
+.movie-row-arrow:hover {
+  background:
+    rgba(255,255,255,0.14);
+
+  transform:
+    translateY(-50%)
+    scale(1.06);
+
+  box-shadow:
+    0 12px 30px rgba(0,0,0,0.45);
+}
+
+.movie-row-arrow:active {
+  transform:
+    translateY(-50%)
+    scale(0.96);
+}
+
+.movie-row-arrow.left {
+  left: 18px;
+}
+
+.movie-row-arrow.right {
+  right: 18px;
+}
+
+/* =========================
+   GRADIENT FADE
+========================= */
+
+.movie-row-wrapper::before,
+.movie-row-wrapper::after {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  bottom: 0;
+
+  width: 140px;
+
+  pointer-events: none;
+
+  z-index: 10;
+}
+
+.movie-row-wrapper::before {
+  left: 0;
+
+  background:
+    linear-gradient(
+      to right,
+      #0f0f0f 0%,
+      rgba(15,15,15,0.92) 20%,
+      transparent 100%
+    );
+}
+
+.movie-row-wrapper::after {
+  right: 0;
+
+  background:
+    linear-gradient(
+      to left,
+      #0f0f0f 0%,
+      rgba(15,15,15,0.92) 20%,
+      transparent 100%
+    );
+}
+
+/* =========================
+   LARGE DESKTOP
+========================= */
+
+@media (min-width: 1600px) {
+  .movie-row-arrow.left {
+    left: 32px;
+  }
+
+  .movie-row-arrow.right {
+    right: 32px;
+  }
+}
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 1024px) {
+  .movie-row {
+    /* margin-bottom: 52px; */
+  }
+
+  .movie-row-header h2 {
+    font-size: 1.6rem;
+  }
+
+  .movie-row-scroll {
+    gap: 18px;
+  }
+
+  .movie-row-arrow {
+    width: 54px;
+    height: 54px;
+  }
+
+  .movie-row-wrapper::before,
+  .movie-row-wrapper::after {
+    width: 90px;
+  }
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 768px) {
+  .movie-row {
+    gap: 18px;
+
+    /* margin-bottom: 42px; */
+  }
+
+  .movie-row-header {
+    padding: 0 24px;
+  }
+
+  .movie-row-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .movie-row-scroll {
+    gap: 16px;
+
+    padding:
+      6px 24px 10px;
+  }
+
+  /* esconder setas */
+  .movie-row-arrow {
+    display: none;
+  }
+
+  .movie-row-wrapper::before,
+  .movie-row-wrapper::after {
+    display: none;
+  }
+}
+
+/* =========================
+   SMALL MOBILE
+========================= */
+
+@media (max-width: 480px) {
+  .movie-row-header {
+    padding: 0 18px;
+  }
+
+  .movie-row-header h2 {
+    font-size: 1.15rem;
+  }
+
+  .movie-row-scroll {
+    gap: 14px;
+
+    padding:
+      4px 18px 10px;
+  }
+}

@@ -6,9 +6,16 @@ import {
   Pencil,
   Trash2,
   Check,
+  Search,
+  Loader2,
+  Film,
+  X,
 } from "lucide-react";
 
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import { Link } from "react-router-dom";
 
@@ -53,9 +60,7 @@ export default function SearchMovie({
     query.trim().length > 0;
 
   useEffect(() => {
-    if (onSearching) {
-      onSearching(hasSearch);
-    }
+    onSearching?.(hasSearch);
   }, [hasSearch]);
 
   async function handleSearch(
@@ -84,7 +89,7 @@ export default function SearchMovie({
           ? data.results
           : []
       );
-      console.log(currentPage, page, pagination)
+
       setPagination(
         data.pagination || null
       );
@@ -146,15 +151,9 @@ export default function SearchMovie({
         videoUrl,
       });
 
-      alert("Filme adicionado");
+      closeModal();
 
-      setSelectedMovie(null);
-
-      setVideoUrl("");
-
-      if (onMovieAdded) {
-        onMovieAdded();
-      }
+      onMovieAdded?.();
 
       await handleSearch(page);
     } catch (error) {
@@ -217,217 +216,218 @@ export default function SearchMovie({
     setVideoUrl("");
   }
 
-  return (
-    <div>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-          marginBottom: 24,
-        }}
+  function renderMovieCard(movie) {
+    const localMovie =
+      movie.localMovie;
+
+    if (
+      movie.alreadyAdded &&
+      localMovie
+    ) {
+      return (
+        <Link
+          key={movie.id}
+          to={`/movie/${localMovie._id}`}
+          className="search-card"
+        >
+          <div className="search-card-poster">
+            <img
+              src={
+                localMovie.poster
+              }
+              alt={
+                localMovie.title
+              }
+            />
+          </div>
+
+          <div className="search-card-content">
+            <h2>
+              {localMovie.title}
+            </h2>
+
+            <div className="search-card-footer">
+              <span>
+                {localMovie.year}
+              </span>
+
+              <div className="search-card-actions">
+                <button
+                  className="icon-button"
+                  onClick={(e) =>
+                    handleFavorite(
+                      e,
+                      localMovie
+                    )
+                  }
+                >
+                  <Heart
+                    size={18}
+                    fill={
+                      localMovie.favorite
+                        ? "red"
+                        : "none"
+                    }
+                  />
+                </button>
+
+                <button
+                  className="icon-button"
+                  onClick={(e) => {
+                    e.preventDefault();
+
+                    onEdit(
+                      localMovie
+                    );
+                  }}
+                >
+                  <Pencil
+                    size={18}
+                  />
+                </button>
+
+                <button
+                  className="icon-button danger"
+                  onClick={(e) => {
+                    e.preventDefault();
+
+                    onDelete(
+                      localMovie._id
+                    );
+                  }}
+                >
+                  <Trash2
+                    size={18}
+                  />
+                </button>
+              </div>
+            </div>
+
+            <div className="existing-badge">
+              <Check size={15} />
+              Já cadastrado
+            </div>
+          </div>
+        </Link>
+      );
+    }
+
+    return (
+      <article
+        className="search-card"
+        key={movie.id}
       >
-        <input
-          placeholder="Buscar filme"
-          value={query}
-          onChange={(e) =>
-            setQuery(e.target.value)
-          }
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleSearch(1);
+        <div className="search-card-poster">
+          <img
+            src={
+              movie.poster_path
+                ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+                : "/placeholder.jpg"
             }
-          }}
-        />
+            alt={movie.title}
+          />
+        </div>
+
+        <div className="search-card-content">
+          <h2>{movie.title}</h2>
+
+          <div className="search-card-footer">
+            <span>
+              {movie.release_date?.split(
+                "-"
+              )[0] || "—"}
+            </span>
+
+            <button
+              className="icon-button play"
+              onClick={() =>
+                setSelectedMovie(
+                  movie
+                )
+              }
+            >
+              <Play size={18} />
+            </button>
+          </div>
+        </div>
+      </article>
+    );
+  }
+
+  return (
+    <section className="search-movie">
+      <div className="search-toolbar">
+        <div className="search-input-group">
+          <Search size={18} />
+
+          <input
+            type="text"
+            placeholder="Buscar filmes..."
+            value={query}
+            onChange={(e) =>
+              setQuery(
+                e.target.value
+              )
+            }
+            onKeyDown={(e) => {
+              if (
+                e.key === "Enter"
+              ) {
+                handleSearch(1);
+              }
+            }}
+          />
+        </div>
 
         <button
+          className="search-submit-button"
           onClick={() =>
             handleSearch(1)
           }
           disabled={loading}
         >
-          {loading
-            ? "Buscando..."
-            : "Buscar"}
+          {loading ? (
+            <>
+              <Loader2
+                size={18}
+                className="spin"
+              />
+              Buscando...
+            </>
+          ) : (
+            <>
+              <Search size={18} />
+              Buscar
+            </>
+          )}
         </button>
       </div>
 
       {hasSearch && (
         <>
-          <div className="movies-grid">
-            {!loading &&
-              results.length ===
-                0 && (
+          {!loading &&
+            results.length ===
+              0 && (
+              <div className="search-empty">
+                <Film size={48} />
+
                 <p>
                   Nenhum filme
                   encontrado
                 </p>
+              </div>
+            )}
+
+          {results.length > 0 && (
+            <div className="search-grid">
+              {results.map(
+                renderMovieCard
               )}
-
-            {results.map((movie) => {
-              const localMovie =
-                movie.localMovie;
-
-              if (
-                movie.alreadyAdded &&
-                localMovie
-              ) {
-                return (
-                  <Link
-                    key={movie.id}
-                    to={`/movie/${localMovie._id}`}
-                    className="movie-card"
-                  >
-                    <img
-                      src={
-                        localMovie.poster
-                      }
-                      alt={
-                        localMovie.title
-                      }
-                    />
-
-                    <div className="movie-info">
-                      <h2>
-                        {
-                          localMovie.title
-                        }
-                      </h2>
-
-                      <div className="movie-card-footer">
-                        <span>
-                          {
-                            localMovie.year
-                          }
-                        </span>
-
-                        <div
-                          style={{
-                            display:
-                              "flex",
-                            gap: 8,
-                            alignItems:
-                              "center",
-                          }}
-                        >
-                          <button
-                            className="favorite-button"
-                            onClick={(
-                              e
-                            ) =>
-                              handleFavorite(
-                                e,
-                                localMovie
-                              )
-                            }
-                          >
-                            <Heart
-                              size={20}
-                              fill={
-                                localMovie.favorite
-                                  ? "red"
-                                  : "none"
-                              }
-                            />
-                          </button>
-
-                          <button
-                            className="favorite-button"
-                            onClick={(
-                              e
-                            ) => {
-                              e.preventDefault();
-
-                              onEdit(
-                                localMovie
-                              );
-                            }}
-                          >
-                            <Pencil
-                              size={18}
-                            />
-                          </button>
-
-                          <button
-                            className="favorite-button"
-                            onClick={(
-                              e
-                            ) => {
-                              e.preventDefault();
-
-                              onDelete(
-                                localMovie._id
-                              );
-                            }}
-                          >
-                            <Trash2
-                              size={18}
-                            />
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="existing-badge">
-                        <Check
-                          size={16}
-                        />
-                        Já cadastrado
-                      </div>
-                    </div>
-                  </Link>
-                );
-              }
-
-              return (
-                <div
-                  className="movie-card"
-                  key={movie.id}
-                >
-                  <img
-                    src={
-                      movie.poster_path
-                        ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-                        : "/placeholder.jpg"
-                    }
-                    alt={
-                      movie.title
-                    }
-                  />
-
-                  <div className="movie-info">
-                    <h2>
-                      {movie.title}
-                    </h2>
-
-                    <div className="movie-card-footer">
-                      <span>
-                        {movie.release_date?.split(
-                          "-"
-                        )[0] ||
-                          "—"}
-                      </span>
-
-                      <button
-                        className="play-button"
-                        onClick={() =>
-                          setSelectedMovie(
-                            movie
-                          )
-                        }
-                      >
-                        <Play
-                          size={20}
-                        />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+            </div>
+          )}
 
           {pagination && (
-            <div className="pagination">
+            <div className="search-pagination">
               <button
                 disabled={
                   page === 1 ||
@@ -470,7 +470,16 @@ export default function SearchMovie({
 
       {selectedMovie && (
         <div className="modal-overlay">
-          <div className="modal">
+          <div className="search-modal">
+            <button
+              className="modal-close"
+              onClick={
+                closeModal
+              }
+            >
+              <X size={18} />
+            </button>
+
             <h2>
               Adicionar filme
             </h2>
@@ -510,14 +519,22 @@ export default function SearchMovie({
                 }
                 disabled={adding}
               >
-                {adding
-                  ? "Adicionando..."
-                  : "Salvar"}
+                {adding ? (
+                  <>
+                    <Loader2
+                      size={16}
+                      className="spin"
+                    />
+                    Salvando...
+                  </>
+                ) : (
+                  "Salvar"
+                )}
               </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }
