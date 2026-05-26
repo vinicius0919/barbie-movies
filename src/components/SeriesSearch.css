@@ -1,0 +1,400 @@
+/* =========================================
+   CONTAINER
+========================================= */
+
+.series-search {
+    position: relative;
+  
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  
+  /* =========================================
+     INPUT
+  ========================================= */
+  
+  .series-search-input {
+    position: relative;
+  
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  
+    width: 100%;
+  
+    padding:
+      0 18px;
+  
+    height: 58px;
+  
+    border-radius: 18px;
+  
+    background:
+      rgba(255, 255, 255, 0.05);
+  
+    border:
+      1px solid
+      rgba(255, 255, 255, 0.06);
+  
+    transition:
+      border-color 0.25s ease,
+      background 0.25s ease,
+      transform 0.25s ease;
+  }
+  
+  .series-search-input:focus-within {
+    border-color:
+      rgba(229, 9, 20, 0.7);
+  
+    background:
+      rgba(255, 255, 255, 0.07);
+  
+    transform: translateY(-1px);
+  }
+  
+  .series-search-input svg {
+    flex-shrink: 0;
+  
+    color:
+      rgba(255, 255, 255, 0.55);
+  }
+  
+  .series-search-input input {
+    flex: 1;
+  
+    height: 100%;
+  
+    border: none;
+    outline: none;
+  
+    background: transparent;
+  
+    color: white;
+  
+    font-size: 0.96rem;
+  }
+  
+  .series-search-input input::placeholder {
+    color:
+      rgba(255, 255, 255, 0.35);
+  }
+  
+  /* =========================================
+     LOADER
+  ========================================= */
+  
+  .spin {
+    animation:
+      spin 0.8s linear infinite;
+  }
+  
+  /* =========================================
+     RESULTS
+  ========================================= */
+  
+  .series-search-results {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  
+    max-height: 420px;
+  
+    overflow-y: auto;
+  
+    padding-right: 6px;
+  }
+  
+  .series-search-results::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .series-search-results::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+  
+    background:
+      rgba(255, 255, 255, 0.12);
+  }
+  
+  /* =========================================
+     ITEM
+  ========================================= */
+  
+  .series-search-item {
+    width: 100%;
+  
+    border: none;
+  
+    cursor: pointer;
+  
+    text-align: left;
+  
+    display: flex;
+    gap: 18px;
+  
+    padding: 14px;
+  
+    border-radius: 22px;
+  
+    background:
+      rgba(255, 255, 255, 0.04);
+  
+    border:
+      1px solid
+      transparent;
+  
+    transition:
+      transform 0.25s ease,
+      border-color 0.25s ease,
+      background 0.25s ease;
+  }
+  
+  .series-search-item:hover {
+    transform: translateY(-2px);
+  
+    border-color:
+      rgba(255, 255, 255, 0.08);
+  
+    background:
+      rgba(255, 255, 255, 0.06);
+  }
+  
+  .series-search-item.active {
+    border-color:
+      rgba(229, 9, 20, 0.8);
+  
+    background:
+      rgba(229, 9, 20, 0.08);
+  }
+  
+  /* =========================================
+     POSTER
+  ========================================= */
+  
+  .series-search-poster {
+    width: 92px;
+    height: 130px;
+  
+    flex-shrink: 0;
+  
+    overflow: hidden;
+  
+    border-radius: 16px;
+  
+    background:
+      rgba(255, 255, 255, 0.04);
+  }
+  
+  .series-search-poster img {
+    width: 100%;
+    height: 100%;
+  
+    object-fit: cover;
+  
+    transition:
+      transform 0.35s ease;
+  }
+  
+  .series-search-item:hover
+    .series-search-poster img {
+    transform: scale(1.05);
+  }
+  
+  .series-search-no-image {
+    width: 100%;
+    height: 100%;
+  
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  
+    color:
+      rgba(255, 255, 255, 0.4);
+  }
+  
+  /* =========================================
+     INFO
+  ========================================= */
+  
+  .series-search-info {
+    flex: 1;
+  
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  
+    min-width: 0;
+  }
+  
+  /* =========================================
+     TITLE ROW
+  ========================================= */
+  
+  .series-search-title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  
+  .series-search-title-row h4 {
+    color: white;
+  
+    font-size: 1.05rem;
+    font-weight: 700;
+  
+    line-height: 1.35;
+  
+    display: -webkit-box;
+  
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  
+    overflow: hidden;
+  }
+  
+  .series-search-title-row svg {
+    color: #39d353;
+  
+    flex-shrink: 0;
+  }
+  
+  /* =========================================
+     META
+  ========================================= */
+  
+  .series-search-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  
+    flex-wrap: wrap;
+  }
+  
+  .series-search-meta span {
+    color:
+      rgba(255, 255, 255, 0.6);
+  
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+  
+  .already-added {
+    padding:
+      6px 10px;
+  
+    border-radius: 999px;
+  
+    background:
+      rgba(57, 211, 83, 0.12);
+  
+    color: #39d353 !important;
+  
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+  
+    border:
+      1px solid
+      rgba(57, 211, 83, 0.2);
+  }
+  
+  /* =========================================
+     OVERVIEW
+  ========================================= */
+  
+  .series-search-info p {
+    color:
+      rgba(255, 255, 255, 0.72);
+  
+    font-size: 0.9rem;
+  
+    line-height: 1.6;
+  
+    display: -webkit-box;
+  
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+  
+    overflow: hidden;
+  }
+  
+  /* =========================================
+     EMPTY
+  ========================================= */
+  
+  .series-search-empty {
+    padding:
+      22px;
+  
+    border-radius: 18px;
+  
+    text-align: center;
+  
+    color:
+      rgba(255, 255, 255, 0.55);
+  
+    background:
+      rgba(255, 255, 255, 0.04);
+  
+    border:
+      1px dashed
+      rgba(255, 255, 255, 0.08);
+  }
+  
+  /* =========================================
+     ANIMATIONS
+  ========================================= */
+  
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+  
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  /* =========================================
+     RESPONSIVE
+  ========================================= */
+  
+  @media (max-width: 768px) {
+    .series-search-item {
+      gap: 14px;
+    }
+  
+    .series-search-poster {
+      width: 76px;
+      height: 112px;
+    }
+  
+    .series-search-title-row h4 {
+      font-size: 0.96rem;
+    }
+  
+    .series-search-info p {
+      font-size: 0.84rem;
+  
+      -webkit-line-clamp: 2;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .series-search-item {
+      flex-direction: column;
+    }
+  
+    .series-search-poster {
+      width: 100%;
+      height: 220px;
+    }
+  
+    .series-search-title-row {
+      align-items: center;
+    }
+  
+    .series-search-results {
+      max-height: 520px;
+    }
+  }

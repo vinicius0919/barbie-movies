@@ -1,0 +1,675 @@
+/* =========================================
+   OVERLAY
+========================================= */
+
+.series-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+  
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  
+    padding: 24px;
+  
+    background:
+      rgba(0, 0, 0, 0.82);
+  
+    backdrop-filter: blur(10px);
+  
+    animation:
+      fadeIn 0.25s ease;
+  }
+  
+  /* =========================================
+     MODAL
+  ========================================= */
+  
+  .series-modal {
+    width: 100%;
+    max-width: 1200px;
+  
+    max-height: 95vh;
+  
+    overflow: hidden;
+  
+    display: flex;
+    flex-direction: column;
+  
+    border-radius: 28px;
+  
+    background:
+      linear-gradient(
+        180deg,
+        rgba(18, 18, 18, 0.98),
+        rgba(10, 10, 10, 0.98)
+      );
+  
+    border:
+      1px solid
+      rgba(255, 255, 255, 0.06);
+  
+    box-shadow:
+      0 40px 120px
+      rgba(0, 0, 0, 0.7);
+  
+    animation:
+      modalEnter 0.35s ease;
+  }
+  
+  /* =========================================
+     HEADER
+  ========================================= */
+  
+  .series-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  
+    padding:
+      24px 28px;
+  
+    border-bottom:
+      1px solid
+      rgba(255, 255, 255, 0.06);
+  }
+  
+  .series-modal-header h2 {
+    color: white;
+  
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  
+  .series-modal-close {
+    width: 42px;
+    height: 42px;
+  
+    border: none;
+  
+    cursor: pointer;
+  
+    border-radius: 50%;
+  
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  
+    background:
+      rgba(255, 255, 255, 0.06);
+  
+    color: white;
+  
+    transition:
+      background 0.25s ease,
+      transform 0.25s ease;
+  }
+  
+  .series-modal-close:hover {
+    background:
+      rgba(255, 255, 255, 0.12);
+  
+    transform: rotate(90deg);
+  }
+  
+  /* =========================================
+     CONTENT
+  ========================================= */
+  
+  .series-modal-content {
+    flex: 1;
+  
+    overflow-y: auto;
+  
+    padding: 28px;
+  
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+  
+  .series-modal-content::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .series-modal-content::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+  
+    background:
+      rgba(255, 255, 255, 0.12);
+  }
+  
+  /* =========================================
+     PREVIEW
+  ========================================= */
+  
+  .series-preview {
+    display: flex;
+    gap: 22px;
+  
+    padding: 20px;
+  
+    border-radius: 22px;
+  
+    background:
+      rgba(255, 255, 255, 0.04);
+  
+    border:
+      1px solid
+      rgba(255, 255, 255, 0.05);
+  }
+  
+  .series-preview img {
+    width: 180px;
+    height: 260px;
+  
+    border-radius: 18px;
+  
+    object-fit: cover;
+  
+    flex-shrink: 0;
+  }
+  
+  .series-preview-info {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  
+  .series-preview-info h3 {
+    color: white;
+  
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  
+  .series-preview-info span {
+    color:
+      rgba(255, 255, 255, 0.6);
+  
+    font-size: 0.95rem;
+  }
+  
+  .series-preview-info p {
+    color:
+      rgba(255, 255, 255, 0.72);
+  
+    line-height: 1.7;
+  }
+  
+  /* =========================================
+     FORM GRID
+  ========================================= */
+  
+  .series-form-grid {
+    display: grid;
+  
+    grid-template-columns:
+      repeat(
+        auto-fit,
+        minmax(240px, 1fr)
+      );
+  
+    gap: 18px;
+  }
+  
+  /* =========================================
+     INPUTS
+  ========================================= */
+  
+  .series-modal input,
+  .series-modal textarea {
+    width: 100%;
+  
+    border: none;
+    outline: none;
+  
+    border-radius: 16px;
+  
+    padding:
+      16px 18px;
+  
+    background:
+      rgba(255, 255, 255, 0.05);
+  
+    color: white;
+  
+    font-size: 0.95rem;
+  
+    border:
+      1px solid
+      transparent;
+  
+    transition:
+      border-color 0.25s ease,
+      background 0.25s ease;
+  }
+  
+  .series-modal textarea {
+    min-height: 130px;
+  
+    resize: vertical;
+  }
+  
+  .series-modal input:focus,
+  .series-modal textarea:focus {
+    border-color:
+      rgba(229, 9, 20, 0.7);
+  
+    background:
+      rgba(255, 255, 255, 0.07);
+  }
+  
+  .series-modal input::placeholder,
+  .series-modal textarea::placeholder {
+    color:
+      rgba(255, 255, 255, 0.35);
+  }
+  
+  /* =========================================
+     GENRES
+  ========================================= */
+  
+  .series-genres {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .series-genres-input {
+    display: flex;
+    gap: 12px;
+  }
+  
+  .series-genres-input button {
+    width: 52px;
+  
+    border: none;
+  
+    border-radius: 16px;
+  
+    cursor: pointer;
+  
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  
+    background: #e50914;
+  
+    color: white;
+  
+    transition:
+      transform 0.25s ease,
+      background 0.25s ease;
+  }
+  
+  .series-genres-input button:hover {
+    transform: scale(1.05);
+  
+    background: #ff1f2d;
+  }
+  
+  .series-genres-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .genre-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  
+    padding:
+      10px 14px;
+  
+    border-radius: 999px;
+  
+    background:
+      rgba(255, 255, 255, 0.08);
+  
+    color: white;
+  
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  
+  .genre-chip button {
+    width: 22px;
+    height: 22px;
+  
+    border: none;
+  
+    border-radius: 50%;
+  
+    cursor: pointer;
+  
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  
+    background:
+      rgba(255, 255, 255, 0.12);
+  
+    color: white;
+  }
+  
+  /* =========================================
+     SECTION HEADER
+  ========================================= */
+  
+  .series-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  
+    gap: 12px;
+  }
+  
+  .series-section-header h3,
+  .series-section-header h5 {
+    color: white;
+  
+    font-weight: 700;
+  }
+  
+  .series-section-header button {
+    border: none;
+  
+    cursor: pointer;
+  
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  
+    padding:
+      10px 16px;
+  
+    border-radius: 14px;
+  
+    background:
+      rgba(255, 255, 255, 0.08);
+  
+    color: white;
+  
+    transition:
+      background 0.25s ease,
+      transform 0.25s ease;
+  }
+  
+  .series-section-header button:hover {
+    transform: translateY(-2px);
+  
+    background:
+      rgba(255, 255, 255, 0.14);
+  }
+  
+  /* =========================================
+     SEASONS
+  ========================================= */
+  
+  .series-seasons {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  
+  .season-card {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  
+    padding: 22px;
+  
+    border-radius: 22px;
+  
+    background:
+      rgba(255, 255, 255, 0.04);
+  
+    border:
+      1px solid
+      rgba(255, 255, 255, 0.05);
+  }
+  
+  .season-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .season-header h4 {
+    color: white;
+  
+    font-size: 1.1rem;
+  }
+  
+  /* =========================================
+     EPISODES
+  ========================================= */
+  
+  .episodes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  
+  .episode-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  
+    padding: 18px;
+  
+    border-radius: 18px;
+  
+    background:
+      rgba(0, 0, 0, 0.22);
+  
+    border:
+      1px solid
+      rgba(255, 255, 255, 0.05);
+  }
+  
+  .episode-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .episode-header strong {
+    color: white;
+  }
+  
+  /* =========================================
+     DANGER BUTTON
+  ========================================= */
+  
+  .danger-button {
+    width: 38px;
+    height: 38px;
+  
+    border: none;
+  
+    border-radius: 12px;
+  
+    cursor: pointer;
+  
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  
+    background:
+      rgba(255, 0, 60, 0.12);
+  
+    color: #ff335f;
+  
+    transition:
+      transform 0.25s ease,
+      background 0.25s ease;
+  }
+  
+  .danger-button:hover {
+    transform: scale(1.08);
+  
+    background:
+      rgba(255, 0, 60, 0.2);
+  }
+  
+  /* =========================================
+     FOOTER
+  ========================================= */
+  
+  .series-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  
+    gap: 14px;
+  
+    padding:
+      22px 28px;
+  
+    border-top:
+      1px solid
+      rgba(255, 255, 255, 0.06);
+  }
+  
+  .series-cancel-button,
+  .series-save-button {
+    height: 52px;
+  
+    padding:
+      0 22px;
+  
+    border: none;
+  
+    border-radius: 16px;
+  
+    cursor: pointer;
+  
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  
+    font-weight: 600;
+  
+    transition:
+      transform 0.25s ease,
+      opacity 0.25s ease;
+  }
+  
+  .series-cancel-button {
+    background:
+      rgba(255, 255, 255, 0.08);
+  
+    color: white;
+  }
+  
+  .series-save-button {
+    background: #e50914;
+  
+    color: white;
+  }
+  
+  .series-cancel-button:hover,
+  .series-save-button:hover {
+    transform: translateY(-2px);
+  }
+  
+  .series-save-button:hover {
+    background: #ff1f2d;
+  }
+  
+  /* =========================================
+     ANIMATIONS
+  ========================================= */
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+  
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes modalEnter {
+    from {
+      opacity: 0;
+  
+      transform:
+        translateY(30px)
+        scale(0.96);
+    }
+  
+    to {
+      opacity: 1;
+  
+      transform:
+        translateY(0)
+        scale(1);
+    }
+  }
+  
+  /* =========================================
+     RESPONSIVE
+  ========================================= */
+  
+  @media (max-width: 900px) {
+    .series-preview {
+      flex-direction: column;
+    }
+  
+    .series-preview img {
+      width: 100%;
+      height: 340px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .series-modal {
+      max-height: 100vh;
+  
+      border-radius: 0;
+    }
+  
+    .series-modal-content {
+      padding: 20px;
+    }
+  
+    .series-modal-header,
+    .series-modal-footer {
+      padding: 18px 20px;
+    }
+  
+    .series-form-grid {
+      grid-template-columns: 1fr;
+    }
+  
+    .series-modal-footer {
+      flex-direction: column;
+    }
+  
+    .series-cancel-button,
+    .series-save-button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .series-preview img {
+      height: 280px;
+    }
+  
+    .series-preview-info h3 {
+      font-size: 1.2rem;
+    }
+  
+    .season-card,
+    .episode-card {
+      padding: 16px;
+    }
+  }

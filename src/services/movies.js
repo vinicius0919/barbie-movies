@@ -28,6 +28,29 @@ export async function getMovies(
 }
 
 /* =========================================
+   GET HOME
+========================================= */
+
+export async function getHome() {
+  const response =
+    await api.get("/api/movies/home");
+
+  return response.data;
+}
+
+/* =========================================
+   ADD VIEW
+========================================= */
+
+export async function addView(id) {
+  const response =
+    await api.post(
+      `/api/movies/${id}/view`
+    );
+
+  return response.data;
+}
+/* =========================================
    GET ONE
 ========================================= */
 

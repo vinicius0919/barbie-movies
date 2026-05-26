@@ -1,0 +1,342 @@
+/* =========================================
+   CARD
+========================================= */
+
+.series-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+
+  background: #111;
+  border-radius: 18px;
+
+  overflow: hidden;
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+
+  cursor: pointer;
+
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+.series-card:hover {
+  transform: translateY(-6px);
+
+  box-shadow:
+    0 20px 40px rgba(0,0,0,0.45);
+}
+
+/* =========================================
+   POSTER
+========================================= */
+
+.series-card-poster {
+  position: relative;
+
+  width: 100%;
+  aspect-ratio: 2 / 3;
+
+  overflow: hidden;
+
+  background: #000;
+}
+
+.series-card-poster img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  display: block;
+
+  transition:
+    transform 0.4s ease,
+    filter 0.4s ease;
+}
+
+.series-card:hover
+.series-card-poster img {
+  transform: scale(1.06);
+
+  filter: brightness(0.7);
+}
+
+/* =========================================
+   OVERLAY
+========================================= */
+
+.series-card-overlay {
+  position: absolute;
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background:
+    linear-gradient(
+      to top,
+      rgba(0,0,0,0.75),
+      rgba(0,0,0,0.15)
+    );
+
+  opacity: 0;
+
+  transition: 0.25s ease;
+
+  z-index: 10;
+}
+
+.series-card:hover
+.series-card-overlay {
+  opacity: 1;
+}
+
+/* =========================================
+   PLAY BUTTON
+========================================= */
+
+.series-card-play {
+  width: 62px;
+  height: 62px;
+
+  border: none;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background:
+    rgba(255,255,255,0.18);
+
+  backdrop-filter: blur(12px);
+
+  color: white;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.series-card-play:hover {
+  transform: scale(1.08);
+
+  background:
+    rgba(255,255,255,0.28);
+}
+
+/* =========================================
+   ACTIONS
+========================================= */
+
+.series-card-actions {
+  position: absolute;
+
+  top: 12px;
+  right: 12px;
+
+  display: flex;
+  gap: 8px;
+
+  z-index: 20;
+}
+
+/* =========================================
+   ACTION BUTTON
+========================================= */
+
+.series-card-action {
+  width: 36px;
+  height: 36px;
+
+  border: none;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background:
+    rgba(0,0,0,0.72);
+
+  backdrop-filter: blur(10px);
+
+  color: white;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.series-card-action:hover {
+  transform: scale(1.08);
+}
+
+/* =========================================
+   ACTION COLORS
+========================================= */
+
+.series-card-action.edit:hover {
+  background: #0ea5e9;
+}
+
+.series-card-action.manage:hover {
+  background: #8b5cf6;
+}
+
+.series-card-action.delete:hover {
+  background: #ef4444;
+}
+
+/* =========================================
+   CONTENT
+========================================= */
+
+.series-card-content {
+  padding: 14px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* =========================================
+   TOP
+========================================= */
+
+.series-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.series-card-top h3 {
+  font-size: 1rem;
+  font-weight: 700;
+
+  color: white;
+
+  line-height: 1.3;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+
+  overflow: hidden;
+}
+
+/* =========================================
+   META
+========================================= */
+
+.series-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  flex-wrap: wrap;
+}
+
+.series-card-meta span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  color: rgba(255,255,255,0.72);
+
+  font-size: 0.82rem;
+}
+
+/* =========================================
+   DESCRIPTION
+========================================= */
+
+.series-card-content p {
+  color: rgba(255,255,255,0.72);
+
+  font-size: 0.88rem;
+  line-height: 1.55;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+
+  overflow: hidden;
+}
+
+/* =========================================
+   GENRES
+========================================= */
+
+.series-card-genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.series-card-genres span {
+  padding:
+    6px 10px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(255,255,255,0.08);
+
+  color:
+    rgba(255,255,255,0.88);
+
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+/* =========================================
+   FOOTER
+========================================= */
+
+.series-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-top: auto;
+
+  color:
+    rgba(255,255,255,0.55);
+
+  font-size: 0.78rem;
+}
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 768px) {
+
+  .series-card-content {
+    padding: 12px;
+  }
+
+  .series-card-content p {
+    -webkit-line-clamp: 3;
+  }
+
+  .series-card-play {
+    width: 54px;
+    height: 54px;
+  }
+
+  .series-card-action {
+    width: 34px;
+    height: 34px;
+  }
+
+}

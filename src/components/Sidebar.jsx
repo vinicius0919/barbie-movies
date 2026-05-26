@@ -4,6 +4,7 @@ import {
   Home,
   Settings,
   Clapperboard,
+  FilmIcon,
   X,
 } from "lucide-react";
 
@@ -56,6 +57,14 @@ export default function Sidebar({
           >
             <Settings size={20} />
             Admin
+          </Link>
+
+          <Link
+            to="/series"
+            className="sidebar-link"
+          >
+            <FilmIcon size={20} />
+            Séries
           </Link>
 
           <Link

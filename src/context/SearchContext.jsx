@@ -1,11 +1,12 @@
 import {
   createContext,
   useContext,
+  useMemo,
   useState,
 } from "react";
 
 const SearchContext =
-  createContext();
+  createContext(null);
 
 export function SearchProvider({
   children,
@@ -18,15 +19,20 @@ export function SearchProvider({
     setGenreFilter,
   ] = useState("");
 
+  const value = useMemo(() => ({
+    search,
+    setSearch,
+
+    genreFilter,
+    setGenreFilter,
+  }), [
+    search,
+    genreFilter,
+  ]);
+
   return (
     <SearchContext.Provider
-      value={{
-        search,
-        setSearch,
-
-        genreFilter,
-        setGenreFilter,
-      }}
+      value={value}
     >
       {children}
     </SearchContext.Provider>
@@ -34,7 +40,14 @@ export function SearchProvider({
 }
 
 export function useSearch() {
-  return useContext(
-    SearchContext
-  );
+  const context =
+    useContext(SearchContext);
+
+  if (!context) {
+    throw new Error(
+      "useSearch deve ser usado dentro do SearchProvider"
+    );
+  }
+
+  return context;
 }

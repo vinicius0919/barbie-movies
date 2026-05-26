@@ -16,6 +16,7 @@ import { useDebounce }
 import Miq from "./../assets/fada.png";
 
 import { useSearch } from "../context/SearchContext";
+import { GENRE_ROWS } from "../config/genres";
 
 export default function Navbar({
   toggleSidebar,
@@ -75,21 +76,12 @@ export default function Navbar({
             Todos
           </option>
 
-          <option value="Animação">
-            Animação
-          </option>
+          {GENRE_ROWS && GENRE_ROWS.map((genre) => (
+            <option key={genre} value={genre}>
+              {genre}
+            </option>
+          ))}
 
-          <option value="Comédia">
-            Comédia
-          </option>
-
-          <option value="Romance">
-            Romance
-          </option>
-
-          <option value="Fantasia">
-            Fantasia
-          </option>
         </select>
 
         <div className="search-box">

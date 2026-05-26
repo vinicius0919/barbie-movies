@@ -10,6 +10,8 @@ import {
   Loader2,
   Film,
   X,
+  Calendar,
+  Star,
 } from "lucide-react";
 
 import {
@@ -82,6 +84,8 @@ export default function SearchMovie({
           currentPage
         );
 
+      console.log(data.results);
+
       setResults(
         Array.isArray(
           data.results
@@ -105,7 +109,7 @@ export default function SearchMovie({
       alert(
         error.response?.data
           ?.error ||
-          "Erro ao buscar filmes"
+        "Erro ao buscar filmes"
       );
     } finally {
       setLoading(false);
@@ -124,29 +128,12 @@ export default function SearchMovie({
 
       setAdding(true);
 
+      console.log(selectedMovie);
+
       await addMovie({
-        tmdbId: selectedMovie.id,
-
-        title:
-          selectedMovie.title,
-
-        overview:
-          selectedMovie.overview,
-
-        poster:
-          selectedMovie.poster_path
-            ? `https://image.tmdb.org/t/p/w500${selectedMovie.poster_path}`
-            : "",
-
-        backdrop:
-          selectedMovie.backdrop_path
-            ? `https://image.tmdb.org/t/p/original${selectedMovie.backdrop_path}`
-            : "",
-
-        year:
-          selectedMovie.release_date?.split(
-            "-"
-          )[0] || "",
+        tmdbId:
+          selectedMovie.tmdbId ||
+          selectedMovie.id,
 
         videoUrl,
       });
@@ -162,7 +149,7 @@ export default function SearchMovie({
       alert(
         error.response?.data
           ?.error ||
-          "Erro ao adicionar filme"
+        "Erro ao adicionar filme"
       );
     } finally {
       setAdding(false);
@@ -220,25 +207,38 @@ export default function SearchMovie({
     const localMovie =
       movie.localMovie;
 
+    /* =========================
+       FILME JÁ CADASTRADO
+    ========================= */
+
     if (
       movie.alreadyAdded &&
       localMovie
     ) {
       return (
         <Link
-          key={movie.id}
+          key={movie.tmdbId}
           to={`/movie/${localMovie._id}`}
-          className="search-card"
+          className="search-card added"
         >
           <div className="search-card-poster">
             <img
+              loading="lazy"
+              decoding="async"
               src={
-                localMovie.poster
+                localMovie.poster ||
+                localMovie.backdrop ||
+                "/placeholder.jpg"
               }
               alt={
                 localMovie.title
               }
             />
+
+            <div className="existing-badge">
+              <Check size={14} />
+              Já cadastrado
+            </div>
           </div>
 
           <div className="search-card-content">
@@ -246,11 +246,20 @@ export default function SearchMovie({
               {localMovie.title}
             </h2>
 
-            <div className="search-card-footer">
+            <div className="movie-meta">
               <span>
-                {localMovie.year}
+                <Calendar size={14} />
+                {localMovie.year ||
+                  "—"}
               </span>
 
+              <span>
+                <Star size={14} />
+                Favorito
+              </span>
+            </div>
+
+            <div className="search-card-footer">
               <div className="search-card-actions">
                 <button
                   className="icon-button"
@@ -276,7 +285,7 @@ export default function SearchMovie({
                   onClick={(e) => {
                     e.preventDefault();
 
-                    onEdit(
+                    onEdit?.(
                       localMovie
                     );
                   }}
@@ -291,7 +300,7 @@ export default function SearchMovie({
                   onClick={(e) => {
                     e.preventDefault();
 
-                    onDelete(
+                    onDelete?.(
                       localMovie._id
                     );
                   }}
@@ -302,52 +311,61 @@ export default function SearchMovie({
                 </button>
               </div>
             </div>
-
-            <div className="existing-badge">
-              <Check size={15} />
-              Já cadastrado
-            </div>
           </div>
         </Link>
       );
     }
 
+    /* =========================
+       FILME NÃO CADASTRADO
+    ========================= */
+
     return (
       <article
         className="search-card"
-        key={movie.id}
+        key={movie.tmdbId}
       >
         <div className="search-card-poster">
           <img
+            loading="lazy"
+            decoding="async"
             src={
-              movie.poster_path
-                ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-                : "/placeholder.jpg"
+              movie.poster ||
+              movie.backdrop ||
+              "/placeholder.jpg"
             }
             alt={movie.title}
           />
+
+          <button
+            className="play-overlay"
+            onClick={() =>
+              setSelectedMovie(
+                movie
+              )
+            }
+          >
+            <Play size={24} />
+          </button>
         </div>
 
         <div className="search-card-content">
           <h2>{movie.title}</h2>
 
-          <div className="search-card-footer">
+          <div className="movie-meta">
             <span>
-              {movie.release_date?.split(
-                "-"
-              )[0] || "—"}
+              <Calendar size={14} />
+              {movie.year || "—"}
             </span>
 
-            <button
-              className="icon-button play"
-              onClick={() =>
-                setSelectedMovie(
-                  movie
-                )
-              }
-            >
-              <Play size={18} />
-            </button>
+            <span>
+              <Star size={14} />
+              {movie.popularity
+                ? Number(
+                  movie.popularity
+                ).toFixed(1)
+                : "0"}
+            </span>
           </div>
         </div>
       </article>
@@ -356,6 +374,10 @@ export default function SearchMovie({
 
   return (
     <section className="search-movie">
+      {/* =========================
+          TOOLBAR
+      ========================= */}
+
       <div className="search-toolbar">
         <div className="search-input-group">
           <Search size={18} />
@@ -403,11 +425,15 @@ export default function SearchMovie({
         </button>
       </div>
 
+      {/* =========================
+          RESULTADOS
+      ========================= */}
+
       {hasSearch && (
         <>
           {!loading &&
             results.length ===
-              0 && (
+            0 && (
               <div className="search-empty">
                 <Film size={48} />
 
@@ -452,7 +478,7 @@ export default function SearchMovie({
               <button
                 disabled={
                   page ===
-                    pagination.totalPages ||
+                  pagination.totalPages ||
                   loading
                 }
                 onClick={() =>
@@ -467,6 +493,10 @@ export default function SearchMovie({
           )}
         </>
       )}
+
+      {/* =========================
+          MODAL
+      ========================= */}
 
       {selectedMovie && (
         <div className="modal-overlay">
