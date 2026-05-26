@@ -14,10 +14,17 @@ import {
   getHome,
 } from "../services/movies";
 
-import { useSearch }
-  from "../context/SearchContext";
+import {
+  useSearch,
+} from "../context/SearchContext";
 
 export default function Home() {
+
+  const {
+    search,
+    genreFilter,
+  } = useSearch();
+
   const [rows, setRows] =
     useState([]);
 
@@ -27,17 +34,19 @@ export default function Home() {
   const [loading, setLoading] =
     useState(false);
 
-  const {
-    search,
-    genreFilter,
-  } = useSearch();
+  /* =========================================
+     LOAD HOME
+  ========================================= */
 
   async function loadHome() {
     try {
       setLoading(true);
 
       const response =
-        await getHome();
+        await getHome({
+          search,
+          genre: genreFilter,
+        });
 
       setRows(
         response.rows || []
@@ -46,6 +55,7 @@ export default function Home() {
       setFeatured(
         response.featured || []
       );
+
     } catch (error) {
       console.error(error);
     } finally {
@@ -53,60 +63,31 @@ export default function Home() {
     }
   }
 
+  /* =========================================
+     RELOAD ON FILTER CHANGE
+  ========================================= */
+
   useEffect(() => {
     loadHome();
-  }, []);
+  }, [
+    search,
+    genreFilter,
+  ]);
 
-  const filteredRows =
-    useMemo(() => {
-
-      return rows.map((row) => {
-
-        const filteredMovies =
-          row.movies.filter(
-            (movie) => {
-
-              const matchSearch =
-                movie.title
-                  ?.toLowerCase()
-                  .includes(
-                    search.toLowerCase()
-                  );
-
-              const matchGenre =
-                !genreFilter ||
-                movie.genres?.includes(
-                  genreFilter
-                );
-
-              return (
-                matchSearch &&
-                matchGenre
-              );
-            }
-          );
-
-        return {
-          ...row,
-          movies:
-            filteredMovies,
-        };
-      });
-
-    }, [
-      rows,
-      search,
-      genreFilter,
-    ]);
+  /* =========================================
+     ALL MOVIES
+  ========================================= */
 
   const allMovies =
     useMemo(() => {
-
-      return filteredRows.flatMap(
+      return rows.flatMap(
         (row) => row.movies
       );
+    }, [rows]);
 
-    }, [filteredRows]);
+  /* =========================================
+     EMPTY
+  ========================================= */
 
   if (
     !loading &&
@@ -123,8 +104,13 @@ export default function Home() {
     );
   }
 
+  /* =========================================
+     RENDER
+  ========================================= */
+
   return (
     <main className="container">
+
       {featured.length > 0 && (
         <HeroBanner
           movies={featured}
@@ -132,22 +118,15 @@ export default function Home() {
       )}
 
       <div className="home-content">
-        {filteredRows.map((row) => {
 
-          if (
-            row.movies.length === 0
-          ) {
-            return null;
-          }
+        {rows.map((row) => (
+          <MovieRow
+            key={row.id}
+            title={row.title}
+            movies={row.movies}
+          />
+        ))}
 
-          return (
-            <MovieRow
-              key={row.id}
-              title={row.title}
-              movies={row.movies}
-            />
-          );
-        })}
       </div>
 
       {loading && (
@@ -155,6 +134,7 @@ export default function Home() {
           <div className="home-loader" />
         </div>
       )}
+
     </main>
   );
 }

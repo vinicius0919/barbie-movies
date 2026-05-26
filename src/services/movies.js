@@ -31,9 +31,16 @@ export async function getMovies(
    GET HOME
 ========================================= */
 
-export async function getHome() {
+export async function getHome(
+  params = {}
+) {
   const response =
-    await api.get("/api/movies/home");
+    await api.get(
+      "/api/movies/home",
+      {
+        params,
+      }
+    );
 
   return response.data;
 }
