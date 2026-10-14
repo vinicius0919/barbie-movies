@@ -44,7 +44,10 @@ api.interceptors.response.use(
       status === 401 &&
       error.config?.url === "/auth/me";
 
-    if (import.meta.env.DEV && !expectedUnauthorized) {
+    if (
+      import.meta.env.DEV &&
+      !expectedUnauthorized
+    ) {
       console.error("[MIQFLIX API ERROR]", {
         url: error.config
           ? api.getUri(error.config)
@@ -59,7 +62,9 @@ api.interceptors.response.use(
     if (error.response) {
       const isHtml =
         typeof responseData === "string" &&
-        /^\s*<!doctype html|^\s*<html/i.test(responseData);
+        /^\s*(<!doctype html|<html)/i.test(
+          responseData
+        );
 
       if (isHtml) {
         error.message =
@@ -97,26 +102,35 @@ export const authApi = {
   },
 
   async login(email, password) {
-    const { data } = await api.post("/auth/login", {
-      email,
-      password,
-    });
+    const { data } = await api.post(
+      "/auth/login",
+      {
+        email,
+        password,
+      }
+    );
 
     return data;
   },
 
   async register(name, email, password) {
-    const { data } = await api.post("/auth/register", {
-      name,
-      email,
-      password,
-    });
+    const { data } = await api.post(
+      "/auth/register",
+      {
+        name,
+        email,
+        password,
+      }
+    );
 
     return data;
   },
 
   async logout() {
-    const { data } = await api.post("/auth/logout");
+    const { data } = await api.post(
+      "/auth/logout"
+    );
+
     return data;
   },
 };
@@ -126,6 +140,10 @@ export const authApi = {
 // =============================================
 
 export const subscriptionApi = {
+  // -------------------------------------------
+  // LISTAR PLANOS
+  // -------------------------------------------
+
   async plans() {
     const { data } = await api.get(
       "/subscriptions/plans"
@@ -133,6 +151,10 @@ export const subscriptionApi = {
 
     return data;
   },
+
+  // -------------------------------------------
+  // CONSULTAR ACESSO
+  // -------------------------------------------
 
   async access() {
     const { data } = await api.get(
@@ -142,12 +164,40 @@ export const subscriptionApi = {
     return data;
   },
 
+  // -------------------------------------------
+  // CRIAR CHECKOUT
+  // -------------------------------------------
+
   async checkout(planId, returnTo = "/") {
     const { data } = await api.post(
       "/subscriptions/checkout",
       {
         planId,
         returnTo,
+      }
+    );
+
+    return data;
+  },
+
+  // -------------------------------------------
+  // CONFIRMAR PAGAMENTO
+  // -------------------------------------------
+
+  async confirm(subscriptionId) {
+    if (
+      typeof subscriptionId !== "string" ||
+      !/^[a-f\d]{24}$/i.test(subscriptionId)
+    ) {
+      throw new Error(
+        "Identificador de assinatura inválido."
+      );
+    }
+
+    const { data } = await api.post(
+      "/subscriptions/confirm",
+      {
+        subscriptionId,
       }
     );
 
