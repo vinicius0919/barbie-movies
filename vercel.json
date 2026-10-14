@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://localhost:3001/api/:path*"
+      "destination": "https://movies-api-production-cf0a.up.railway.app/api/:path*"
     },
     {
       "source": "/(.*)",

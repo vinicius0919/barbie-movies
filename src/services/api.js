@@ -1,3 +1,4 @@
+
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || "/api";
@@ -37,36 +38,52 @@ api.interceptors.response.use(
 
   (error) => {
     const status = error.response?.status;
+    const responseData = error.response?.data;
 
     const expectedUnauthorized =
-      error.response?.status === 401 && error.config?.url === "/auth/me";
+      status === 401 &&
+      error.config?.url === "/auth/me";
 
     if (import.meta.env.DEV && !expectedUnauthorized) {
       console.error("[MIQFLIX API ERROR]", {
-        url: error.config ? api.getUri(error.config) : undefined,
-        status: error.response?.status,
+        url: error.config
+          ? api.getUri(error.config)
+          : undefined,
+        status,
         code: error.code,
         originalMessage: error.message,
-        response: error.response?.data,
+        response: responseData,
       });
     }
 
     if (error.response) {
-      const serverMessage =
-        error.response.data?.error || error.response.data?.message;
+      const isHtml =
+        typeof responseData === "string" &&
+        /^\s*<!doctype html|^\s*<html/i.test(responseData);
 
-      error.message =
-        typeof serverMessage === "string"
-          ? serverMessage
-          : `Erro HTTP ${status}`;
+      if (isHtml) {
+        error.message =
+          "A API retornou HTML em vez de JSON. Verifique o rewrite da Vercel e a URL da Railway.";
+      } else {
+        const serverMessage =
+          responseData?.error ||
+          responseData?.message;
+
+        error.message =
+          typeof serverMessage === "string"
+            ? serverMessage
+            : `Erro HTTP ${status}`;
+      }
     } else if (error.code === "ECONNABORTED") {
-      error.message = "O servidor demorou muito para responder.";
+      error.message =
+        "O servidor demorou muito para responder.";
     } else if (error.code === "ERR_NETWORK") {
-      error.message = "Falha de rede. Verifique a API, o proxy ou o CORS.";
+      error.message =
+        "Falha de rede. Verifique a API, o proxy ou o CORS.";
     }
 
     return Promise.reject(error);
-  },
+  }
 );
 
 // =============================================
@@ -110,19 +127,29 @@ export const authApi = {
 
 export const subscriptionApi = {
   async plans() {
-    const { data } = await api.get("/subscriptions/plans");
+    const { data } = await api.get(
+      "/subscriptions/plans"
+    );
 
     return data;
   },
 
   async access() {
-    const { data } = await api.get("/subscriptions/access");
+    const { data } = await api.get(
+      "/subscriptions/access"
+    );
 
     return data;
   },
 
-  async checkout(planId) {
-    const { data } = await api.post("/subscriptions/checkout", { planId });
+  async checkout(planId, returnTo = "/") {
+    const { data } = await api.post(
+      "/subscriptions/checkout",
+      {
+        planId,
+        returnTo,
+      }
+    );
 
     return data;
   },
