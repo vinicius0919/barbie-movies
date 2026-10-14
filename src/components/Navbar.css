@@ -4,32 +4,51 @@
   z-index: 90;
 
   width: 100%;
-
   display: flex;
   flex-direction: column;
   gap: 18px;
 
   padding: 16px 28px;
 
-  background:
-    linear-gradient(
-      180deg,
-      rgba(5, 5, 8, 0.96),
-      rgba(5, 5, 8, 0.82)
-    );
+  background: linear-gradient(
+    180deg,
+    rgba(5, 5, 8, 0.96),
+    rgba(5, 5, 8, 0.82)
+  );
 
   backdrop-filter: blur(22px);
 
   border-bottom: 1px solid
     rgba(255, 255, 255, 0.05);
 
-  box-shadow:
-    0 10px 30px
-      rgba(0, 0, 0, 0.28);
+  box-shadow: 0 10px 30px
+    rgba(0, 0, 0, 0.28);
 
-  overflow: hidden;
+  overflow: visible;
+}
+.navbar-account-dropdown {
+  z-index: 1000;
+  isolation: isolate;
 }
 
+.navbar-brand-area {
+  flex: 1;
+  min-width: 0;
+}
+
+.navbar-auth {
+  position: relative;
+  z-index: 5;
+  flex-shrink: 0;
+}
+
+.logo-wrapper {
+  text-decoration: none;
+}
+
+.logo {
+  margin: 0;
+}
 /* =========================================
    ROWS
 ========================================= */
@@ -499,5 +518,270 @@
 
   .genre-select {
     padding: 0 14px;
+  }
+}
+
+
+/* =========================================
+   NAVBAR - ÁREA DE AUTENTICAÇÃO
+========================================= */
+
+.navbar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.navbar-brand-area {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.navbar-brand-area .logo-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.navbar-auth {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.navbar-guest-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.navbar-login-link,
+.navbar-subscribe-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.navbar-login-link {
+  color: #f5f5f5;
+  background: transparent;
+}
+
+.navbar-login-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.navbar-subscribe-link {
+  color: #fff;
+  background: #b91c1c;
+}
+
+.navbar-subscribe-link:hover {
+  background: #dc2626;
+}
+
+/* =========================================
+   BOTÃO DA CONTA
+========================================= */
+
+.navbar-account {
+  position: relative;
+}
+
+.navbar-account-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 230px;
+  padding: 5px 10px 5px 5px;
+  border: 1px solid transparent;
+  border-radius: 30px;
+  background: transparent;
+  color: #f5f5f5;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.navbar-account-trigger:hover,
+.navbar-account-trigger[aria-expanded="true"] {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.navbar-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #9f2424;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.navbar-avatar-large {
+  width: 42px;
+  height: 42px;
+  font-size: 18px;
+}
+
+.navbar-account-label {
+  overflow: hidden;
+  max-width: 140px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.navbar-account-trigger svg {
+  transition: transform 0.2s ease;
+}
+
+.navbar-account-trigger .chevron-open {
+  transform: rotate(180deg);
+}
+
+/* =========================================
+   DROPDOWN
+========================================= */
+
+.navbar-account-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  z-index: 1000;
+  width: min(290px, calc(100vw - 24px));
+  padding: 10px;
+  border: 1px solid #333;
+  border-radius: 12px;
+  background: #1b1b1b;
+  color: #f5f5f5;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+}
+
+.navbar-account-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px;
+  min-width: 0;
+}
+
+.navbar-account-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.navbar-account-details strong {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 14px;
+}
+
+.navbar-account-details span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #aaa;
+  font-size: 12px;
+}
+
+.navbar-account-divider {
+  height: 1px;
+  margin: 6px 0;
+  background: #383838;
+}
+
+.navbar-account-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #e5e5e5;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.navbar-account-item:hover {
+  background: #303030;
+}
+
+.navbar-account-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.navbar-logout {
+  color: #fca5a5;
+}
+
+.navbar-logout:hover {
+  background: rgba(220, 38, 38, 0.12);
+}
+
+.navbar-logout-error {
+  padding: 8px;
+  margin: 4px 0 0;
+  color: #fca5a5;
+  font-size: 12px;
+}
+
+/* =========================================
+   RESPONSIVIDADE
+========================================= */
+
+@media (max-width: 600px) {
+  .navbar-top {
+    gap: 8px;
+  }
+
+  .navbar-brand-area {
+    gap: 6px;
+  }
+
+  .navbar-account-label {
+    display: none;
+  }
+
+  .navbar-account-trigger {
+    gap: 5px;
+    padding: 4px;
+  }
+
+  .navbar-guest-actions {
+    gap: 4px;
+  }
+
+  .navbar-login-link,
+  .navbar-subscribe-link {
+    padding: 0 9px;
+    font-size: 12px;
   }
 }
