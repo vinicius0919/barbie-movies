@@ -12,7 +12,7 @@ export async function searchTmdb(
 ) {
   const response =
     await api.get(
-      `/api/tmdb/movies/search`,
+      `/tmdb/movies/search`,
       {
         params: {
           query,
@@ -31,7 +31,7 @@ export async function searchTMDBSeries(
 ) {
   const response =
     await api.get(
-      "/api/tmdb/series/search",
+      "/tmdb/series/search",
       {
         params: {
           query,

@@ -16,7 +16,7 @@ import {
 
 import {
   useSearch,
-} from "../context/SearchContext";
+} from "../contexts/SearchContext";
 
 export default function Home() {
 

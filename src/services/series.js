@@ -9,7 +9,7 @@ export async function getSeries(
 ) {
   const response =
     await api.get(
-      "/api/series",
+      "/series",
       {
         params,
       }
@@ -25,7 +25,7 @@ export async function getSeries(
 export async function getHomeSeries() {
   const response =
     await api.get(
-      "/api/series/home"
+      "/series/home"
     );
 
   return response.data;
@@ -40,7 +40,7 @@ export async function getSeriesById(
 ) {
   const response =
     await api.get(
-      `/api/series/${id}`
+      `/series/${id}`
     );
 
   return response.data;
@@ -55,7 +55,7 @@ export async function createSeries(
 ) {
   const response =
     await api.post(
-      "/api/series",
+      "/series",
       data
     );
 
@@ -72,7 +72,7 @@ export async function updateSeries(
 ) {
   const response =
     await api.put(
-      `/api/series/${id}`,
+      `/series/${id}`,
       data
     );
 
@@ -88,7 +88,7 @@ export async function deleteSeries(
 ) {
   const response =
     await api.delete(
-      `/api/series/${id}`
+      `/series/${id}`
     );
 
   return response.data;
@@ -105,7 +105,7 @@ export async function addEpisode(
 ) {
   const response =
     await api.post(
-      `/api/series/${seriesId}/episodes`,
+      `/series/${seriesId}/episodes`,
       {
         seasonNumber,
         episode,
@@ -127,7 +127,7 @@ export async function updateEpisode(
 ) {
   const response =
     await api.put(
-      `/api/series/${seriesId}/seasons/${seasonNumber}/episodes/${episodeNumber}`,
+      `/series/${seriesId}/seasons/${seasonNumber}/episodes/${episodeNumber}`,
       data
     );
 
@@ -145,7 +145,7 @@ export async function deleteEpisode(
 ) {
   const response =
     await api.delete(
-      `/api/series/${seriesId}/seasons/${seasonNumber}/episodes/${episodeNumber}`
+      `/series/${seriesId}/seasons/${seasonNumber}/episodes/${episodeNumber}`
     );
 
   return response.data;
@@ -160,7 +160,7 @@ export async function addSeriesView(
 ) {
   const response =
     await api.post(
-      `/api/series/${id}/view`
+      `/series/${id}/view`
     );
 
   return response.data;
@@ -177,7 +177,7 @@ export async function addEpisodeView(
 ) {
   const response =
     await api.post(
-      `/api/series/${seriesId}/seasons/${seasonNumber}/episodes/${episodeNumber}/view`
+      `/series/${seriesId}/seasons/${seasonNumber}/episodes/${episodeNumber}/view`
     );
 
   return response.data;

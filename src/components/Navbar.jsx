@@ -15,7 +15,7 @@ import { useDebounce }
 
 import Miq from "./../assets/fada.png";
 
-import { useSearch } from "../context/SearchContext";
+import { useSearch } from "../contexts/SearchContext";
 import { GENRE_ROWS } from "../config/genres";
 
 export default function Navbar({

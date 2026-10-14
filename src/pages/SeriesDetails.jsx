@@ -156,7 +156,7 @@ export default function SeriesDetails() {
                 return "";
             }
 
-            return `${import.meta.env.VITE_API_URL}/api/stream?page=${encodeURIComponent(
+            return `${import.meta.env.VITE_API_URL}/stream?page=${encodeURIComponent(
                 currentVideo.videoUrl
             )}`;
 

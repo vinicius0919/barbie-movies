@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://localhost:3001/api/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

@@ -13,7 +13,7 @@ export async function getMovies(
   genre = ""
 ) {
   const response = await api.get(
-    "/api/movies",
+    "/movies",
     {
       params: {
         page,
@@ -36,7 +36,7 @@ export async function getHome(
 ) {
   const response =
     await api.get(
-      "/api/movies/home",
+      "/movies/home",
       {
         params,
       }
@@ -52,7 +52,7 @@ export async function getHome(
 export async function addView(id) {
   const response =
     await api.post(
-      `/api/movies/${id}/view`
+      `/movies/${id}/view`
     );
 
   return response.data;
@@ -63,7 +63,7 @@ export async function addView(id) {
 
 export async function getMovie(id) {
   const response = await api.get(
-    `/api/movies/${id}`
+    `/movies/${id}`
   );
 
   return response.data;
@@ -75,7 +75,7 @@ export async function getMovie(id) {
 
 export async function addMovie(movie) {
   const response = await api.post(
-    "/api/movies",
+    "/movies",
     movie
   );
 
@@ -91,7 +91,7 @@ export async function updateMovie(
   movie
 ) {
   const response = await api.put(
-    `/api/movies/${id}`,
+    `/movies/${id}`,
     movie
   );
 
@@ -104,7 +104,7 @@ export async function updateMovie(
 
 export async function deleteMovie(id) {
   const response = await api.delete(
-    `/api/movies/${id}`
+    `/movies/${id}`
   );
 
   return response.data;
@@ -119,7 +119,7 @@ export async function getFavorites(
   limit = 20
 ) {
   const response = await api.get(
-    "/api/movies/favorites/list",
+    "/movies/favorites/list",
     {
       params: {
         page,
@@ -133,7 +133,7 @@ export async function getFavorites(
 
 export async function toggleFavorite(id) {
   const response = await api.patch(
-    `/api/movies/${id}/favorite`
+    `/movies/${id}/favorite`
   );
 
   return response.data;
@@ -147,7 +147,7 @@ export async function refreshMovieFromTMDB(
   id
 ) {
   const response = await api.post(
-    `/api/movies/${id}/refresh-tmdb`
+    `/movies/${id}/refresh-tmdb`
   );
 
   return response.data;
