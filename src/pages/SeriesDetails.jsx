@@ -1,707 +1,1044 @@
+
 import "./SeriesDetails.css";
 
 import {
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
 
-import {
-    Link,
-    useParams,
-} from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 import {
-    ArrowLeft,
-    Play,
-    Eye,
-    Tv,
-    Layers3,
-    Clock3,
-    ChevronDown,
-    ChevronUp,
+  ArrowLeft,
+  Play,
+  Eye,
+  Tv,
+  Layers3,
+  Clock3,
+  ChevronDown,
+  ChevronUp,
+  Heart,
+  Check,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 
+import api from "../services/api";
+
 import {
-    getSeriesById,
-    addSeriesView,
-    addEpisodeView,
+  getSeriesById,
+  addEpisodeView,
 } from "../services/series";
 
-/* =========================================
-   COMPONENT
-========================================= */
+// =========================================
+// HELPERS
+// =========================================
+
+const formatViews = (views) => {
+  return Number(views || 0).toLocaleString("pt-BR");
+};
+
+const getSeasonTitle = (season) => {
+  if (season.seasonNumber === 0) {
+    return season.title || "Especiais";
+  }
+
+  return season.title || `Temporada ${season.seasonNumber}`;
+};
+
+const getEpisodeKey = (seasonNumber, episode) => {
+  return (
+    episode._id ||
+    `${seasonNumber}-${episode.episodeNumber}`
+  );
+};
+
+const findFirstEpisode = (series) => {
+  if (!series?.seasons?.length) {
+    return null;
+  }
+
+  const seasons = [...series.seasons].sort(
+    (a, b) => a.seasonNumber - b.seasonNumber
+  );
+
+  // Prioriza temporadas regulares.
+  const regularSeasons = seasons.filter(
+    (season) => season.seasonNumber > 0
+  );
+
+  const specialSeasons = seasons.filter(
+    (season) => season.seasonNumber === 0
+  );
+
+  for (const season of [
+    ...regularSeasons,
+    ...specialSeasons,
+  ]) {
+    const episodes = [...(season.episodes || [])].sort(
+      (a, b) => a.episodeNumber - b.episodeNumber
+    );
+
+    if (episodes.length > 0) {
+      return {
+        seasonNumber: season.seasonNumber,
+        episode: episodes[0],
+      };
+    }
+  }
+
+  return null;
+};
+
+// =========================================
+// COMPONENT
+// =========================================
 
 export default function SeriesDetails() {
+  const { id } = useParams();
 
-    const { id } =
-        useParams();
+  const videoRef = useRef(null);
+  const playerRef = useRef(null);
+  const viewRequestRef = useRef(new Set());
 
-    const videoRef =
-        useRef(null);
+  // =========================================
+  // STATES
+  // =========================================
 
-    const [series, setSeries] =
-        useState(null);
+  const [series, setSeries] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-    const [loading, setLoading] =
-        useState(true);
+  const [selectedEpisode, setSelectedEpisode] =
+    useState(null);
 
-    const [
-        selectedSeason,
-        setSelectedSeason,
-    ] = useState(0);
+  const [playbackRequested, setPlaybackRequested] =
+    useState(false);
 
-    const [
-        selectedEpisode,
-        setSelectedEpisode,
-    ] = useState(null);
+  const [expandedSeasons, setExpandedSeasons] =
+    useState({});
 
-    const [
-        expandedSeasons,
-        setExpandedSeasons,
-    ] = useState({});
+  const [favorite, setFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] =
+    useState(false);
 
-    /* =========================================
-       LOAD
-    ========================================= */
+  const [playbackError, setPlaybackError] =
+    useState("");
 
-    useEffect(() => {
+  // =========================================
+  // LOAD SERIES
+  // =========================================
 
-        async function load() {
+  useEffect(() => {
+    let cancelled = false;
 
-            try {
+    async function loadSeries() {
+      try {
+        setLoading(true);
+        setError("");
+        setSeries(null);
+        setSelectedEpisode(null);
+        setPlaybackRequested(false);
+        setPlaybackError("");
+        setExpandedSeasons({});
+        setFavorite(false);
 
-                setLoading(true);
+        viewRequestRef.current = new Set();
 
-                const data =
-                    await getSeriesById(
-                        id
-                    );
+        const data = await getSeriesById(id);
 
-                setSeries(data);
+        if (cancelled) return;
 
-                if (
-                    data?.seasons?.length
-                ) {
+        setSeries(data);
 
-                    setExpandedSeasons({
-                        0: true,
-                    });
+        const firstEpisode = findFirstEpisode(data);
 
-                }
+        if (firstEpisode) {
+          setSelectedEpisode(firstEpisode);
 
-                await addSeriesView(id);
-
-            } catch (error) {
-
-                console.error(error);
-
-            } finally {
-
-                setLoading(false);
-
-            }
-
+          setExpandedSeasons({
+            [firstEpisode.seasonNumber]: true,
+          });
         }
+      } catch (err) {
+        if (cancelled) return;
 
-        load();
-
-    }, [id]);
-
-    /* =========================================
-       TOTAL EPISODES
-    ========================================= */
-
-    const totalEpisodes =
-        useMemo(() => {
-
-            return (
-                series?.seasons?.reduce(
-                    (
-                        acc,
-                        season
-                    ) =>
-                        acc +
-                        (
-                            season
-                                .episodes
-                                ?.length || 0
-                        ),
-                    0
-                ) || 0
-            );
-
-        }, [series]);
-
-    /* =========================================
-       CURRENT VIDEO
-    ========================================= */
-
-    const currentVideo =
-        selectedEpisode ||
-        series?.seasons?.[0]
-            ?.episodes?.[0];
-
-    /* =========================================
-       STREAM URL
-    ========================================= */
-
-    const streamUrl =
-        useMemo(() => {
-
-            if (
-                !currentVideo?.videoUrl
-            ) {
-                return "";
-            }
-
-            return `${import.meta.env.VITE_API_URL}/stream?page=${encodeURIComponent(
-                currentVideo.videoUrl
-            )}`;
-
-        }, [currentVideo]);
-
-    /* =========================================
-       FORCE VIDEO RELOAD
-    ========================================= */
-
-    useEffect(() => {
-
-        if (
-            !videoRef.current ||
-            !currentVideo
-        ) {
-            return;
-        }
-
-        const video =
-            videoRef.current;
-
-        video.load();
-
-        const playPromise =
-            video.play();
-
-        if (
-            playPromise !==
-            undefined
-        ) {
-
-            playPromise
-                .catch(() => { });
-
-        }
-
-    }, [currentVideo]);
-
-    /* =========================================
-       TOGGLE SEASON
-    ========================================= */
-
-    function toggleSeason(index) {
-
-        setExpandedSeasons(
-            (prev) => ({
-                ...prev,
-                [index]:
-                    !prev[index],
-            })
+        console.error(
+          "Erro ao carregar série:",
+          err
         );
 
+        setError(
+          err.response?.data?.error ||
+            "Não foi possível carregar a série."
+        );
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
     }
 
-    /* =========================================
-       PLAY EPISODE
-    ========================================= */
+    loadSeries();
 
-    async function handlePlayEpisode(
-        seasonIndex,
-        episode
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  // =========================================
+  // LOAD FAVORITE STATE
+  // =========================================
+
+  useEffect(() => {
+    if (!id) return;
+
+    let cancelled = false;
+
+    async function loadFavorite() {
+      try {
+        // Consulta os IDs das séries favoritas
+        // do usuário autenticado.
+        //
+        // O endpoint atual é paginado, então
+        // buscamos todas as páginas necessárias.
+
+        let page = 1;
+        let found = false;
+        let totalPages = 1;
+
+        do {
+          const response = await api.get(
+            "/series/favorites/list",
+            {
+              params: {
+                page,
+                limit: 100,
+              },
+            }
+          );
+
+          if (cancelled) return;
+
+          const data = response.data;
+
+          found = (data.series || []).some(
+            (item) => String(item._id) === String(id)
+          );
+
+          totalPages = data.totalPages || 0;
+          page++;
+        } while (!found && page <= totalPages);
+
+        if (!cancelled) {
+          setFavorite(found);
+        }
+      } catch (err) {
+        if (cancelled) return;
+
+        // Visitantes não autenticados podem
+        // visualizar os metadados da série.
+        if (err.response?.status !== 401) {
+          console.error(
+            "Erro ao carregar favoritos:",
+            err
+          );
+        }
+      }
+    }
+
+    loadFavorite();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  // =========================================
+  // SORTED SEASONS
+  // =========================================
+
+  const seasons = useMemo(() => {
+    return [...(series?.seasons || [])]
+      .sort(
+        (a, b) =>
+          a.seasonNumber - b.seasonNumber
+      )
+      .map((season) => ({
+        ...season,
+        episodes: [...(season.episodes || [])].sort(
+          (a, b) =>
+            a.episodeNumber - b.episodeNumber
+        ),
+      }));
+  }, [series]);
+
+  // =========================================
+  // TOTAL EPISODES
+  // =========================================
+
+  const totalEpisodes = useMemo(() => {
+    return seasons.reduce(
+      (total, season) =>
+        total + season.episodes.length,
+      0
+    );
+  }, [seasons]);
+
+  // =========================================
+  // CURRENT EPISODE
+  // =========================================
+
+  const currentEpisode = selectedEpisode?.episode;
+
+  const currentSeasonNumber =
+    selectedEpisode?.seasonNumber;
+
+  const currentEpisodeKey = currentEpisode
+    ? getEpisodeKey(
+        currentSeasonNumber,
+        currentEpisode
+      )
+    : null;
+
+  // =========================================
+  // STREAM URL
+  // =========================================
+
+  // Compatibilidade com o endpoint atual.
+  // Futuramente, substituir por uma rota
+  // protegida por assinatura no backend.
+
+  const streamUrl = useMemo(() => {
+    if (
+      !playbackRequested ||
+      !currentEpisode?.videoUrl
     ) {
-
-        try {
-
-            setSelectedSeason(
-                seasonIndex
-            );
-
-            setSelectedEpisode(
-                episode
-            );
-
-            await addEpisodeView(
-                series._id,
-                seasonIndex + 1,
-                episode.episodeNumber
-            );
-
-            window.scrollTo({
-                top: 0,
-                behavior: "smooth",
-            });
-
-        } catch (error) {
-
-            console.error(error);
-
-        }
-
+      return "";
     }
 
-    /* =========================================
-       LOADING
-    ========================================= */
+    const baseUrl =
+      import.meta.env.VITE_API_URL?.replace(
+        /\/$/,
+        ""
+      );
 
-    if (loading) {
-
-        return (
-            <div className="series-details-loading">
-                <div className="series-loader" />
-            </div>
-        );
-
-    }
-
-    /* =========================================
-       NOT FOUND
-    ========================================= */
-
-    if (!series) {
-
-        return (
-            <div className="series-details-error">
-                Série não encontrada.
-            </div>
-        );
-
-    }
-
-    /* =========================================
-       RENDER
-    ========================================= */
+    if (!baseUrl) return "";
 
     return (
-        <div className="series-details-page">
+      `${baseUrl}/stream?page=` +
+      encodeURIComponent(
+        currentEpisode.videoUrl
+      )
+    );
+  }, [
+    playbackRequested,
+    currentEpisode?.videoUrl,
+  ]);
 
-            {/* =====================================
-                BACKDROP
-            ===================================== */}
+  // =========================================
+  // PLAYBACK EFFECT
+  // =========================================
 
-            <div className="series-details-backdrop">
+  useEffect(() => {
+    if (
+      !playbackRequested ||
+      !streamUrl ||
+      !videoRef.current
+    ) {
+      return;
+    }
 
-                <img
-                    src={
-                        series.backdrop ||
-                        series.poster
+    const video = videoRef.current;
+
+    video.load();
+
+    const promise = video.play();
+
+    if (promise?.catch) {
+      promise.catch((err) => {
+        if (err.name !== "AbortError") {
+          console.error(
+            "Reprodução não iniciada:",
+            err
+          );
+        }
+      });
+    }
+  }, [
+    playbackRequested,
+    streamUrl,
+    currentEpisodeKey,
+  ]);
+
+  // =========================================
+  // TOGGLE SEASON
+  // =========================================
+
+  const toggleSeason = useCallback(
+    (seasonNumber) => {
+      setExpandedSeasons((prev) => ({
+        ...prev,
+        [seasonNumber]:
+          !prev[seasonNumber],
+      }));
+    },
+    []
+  );
+
+  // =========================================
+  // REGISTER EPISODE VIEW
+  // =========================================
+
+  const registerEpisodeView = useCallback(
+    async (seasonNumber, episode) => {
+      if (!series?._id) return;
+
+      const key = getEpisodeKey(
+        seasonNumber,
+        episode
+      );
+
+      // Evita registrar novamente o mesmo
+      // episódio nesta montagem da página.
+      if (viewRequestRef.current.has(key)) {
+        return;
+      }
+
+      viewRequestRef.current.add(key);
+
+      try {
+        const result = await addEpisodeView(
+          series._id,
+          seasonNumber,
+          episode.episodeNumber
+        );
+
+        // Atualiza os contadores localmente.
+        setSeries((prev) => {
+          if (!prev) return prev;
+
+          return {
+            ...prev,
+            views:
+              result?.totalSeriesViews ??
+              prev.views,
+            seasons: prev.seasons.map(
+              (season) => {
+                if (
+                  season.seasonNumber !==
+                  seasonNumber
+                ) {
+                  return season;
+                }
+
+                return {
+                  ...season,
+                  episodes: season.episodes.map(
+                    (item) => {
+                      if (
+                        item.episodeNumber !==
+                        episode.episodeNumber
+                      ) {
+                        return item;
+                      }
+
+                      return {
+                        ...item,
+                        views:
+                          result?.episodeViews ??
+                          item.views,
+                      };
                     }
-                    alt={series.title}
-                />
+                  ),
+                };
+              }
+            ),
+          };
+        });
+      } catch (err) {
+        viewRequestRef.current.delete(key);
 
-            </div>
+        console.error(
+          "Erro ao registrar visualização:",
+          err
+        );
+      }
+    },
+    [series?._id]
+  );
 
-            <div className="series-details-overlay" />
+  // =========================================
+  // PLAY EPISODE
+  // =========================================
 
-            {/* =====================================
-                TOPBAR
-            ===================================== */}
+  const handlePlayEpisode = useCallback(
+    async (season, episode) => {
+      if (!episode?.videoUrl) {
+        setPlaybackError(
+          "Este episódio ainda não possui uma fonte de reprodução."
+        );
+        return;
+      }
 
-            <div className="series-details-topbar">
+      setPlaybackError("");
 
-                <Link
-                    to="/series"
-                    className="series-back-button"
-                >
+      setSelectedEpisode({
+        seasonNumber: season.seasonNumber,
+        episode,
+      });
 
-                    <ArrowLeft size={18} />
+      setExpandedSeasons((prev) => ({
+        ...prev,
+        [season.seasonNumber]: true,
+      }));
 
-                    Voltar
+      setPlaybackRequested(true);
 
-                </Link>
+      // Registra visualização sem bloquear
+      // a seleção do episódio.
+      void registerEpisodeView(
+        season.seasonNumber,
+        episode
+      );
 
-            </div>
+      requestAnimationFrame(() => {
+        playerRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
+    },
+    [registerEpisodeView]
+  );
 
-            {/* =====================================
-                HERO
-            ===================================== */}
+  // =========================================
+  // WATCH NOW
+  // =========================================
 
-            <section className="series-hero">
+  const handleWatchNow = useCallback(() => {
+    if (!series) return;
 
-                <div className="series-hero-poster">
+    const first = findFirstEpisode(series);
 
-                    <img
-                        src={
-                            series.poster
-                        }
-                        alt={series.title}
-                    />
+    if (!first) return;
 
-                </div>
+    const season = series.seasons.find(
+      (item) =>
+        item.seasonNumber ===
+        first.seasonNumber
+    );
 
-                <div className="series-hero-content">
+    if (!season) return;
 
-                    <h1>
-                        {series.title}
-                    </h1>
+    handlePlayEpisode(
+      season,
+      first.episode
+    );
+  }, [series, handlePlayEpisode]);
 
-                    <div className="series-meta">
+  // =========================================
+  // TOGGLE FAVORITE
+  // =========================================
 
-                        <span>
-                            <Tv size={16} />
-                            {
-                                series.year
-                            }
-                        </span>
+  const handleToggleFavorite = async () => {
+    if (favoriteLoading || !series?._id) {
+      return;
+    }
 
-                        <span>
-                            <Layers3 size={16} />
-                            {
-                                series
-                                    .seasons
-                                    ?.length
-                            }{" "}
-                            temporadas
-                        </span>
+    try {
+      setFavoriteLoading(true);
 
-                        <span>
-                            <Play size={16} />
-                            {
-                                totalEpisodes
-                            }{" "}
-                            episódios
-                        </span>
+      const response = await api.patch(
+        `/series/${series._id}/favorite`
+      );
 
-                        <span>
-                            <Eye size={16} />
-                            {(
-                                series.views ||
-                                0
-                            ).toLocaleString()}
-                        </span>
+      setFavorite(
+        Boolean(response.data.favorite)
+      );
+    } catch (err) {
+      console.error(
+        "Erro ao atualizar favorito:",
+        err
+      );
 
-                    </div>
+      if (err.response?.status === 401) {
+        setError(
+          "Faça login para adicionar séries à sua lista."
+        );
+      } else {
+        setError(
+          "Não foi possível atualizar sua lista."
+        );
+      }
+    } finally {
+      setFavoriteLoading(false);
+    }
+  };
 
-                    <p className="series-overview">
-                        {
-                            series.overview
-                        }
-                    </p>
+  // =========================================
+  // LOADING
+  // =========================================
 
-                    <div className="series-genres">
+  if (loading) {
+    return (
+      <div className="series-details-loading">
+        <div className="series-loader" />
+      </div>
+    );
+  }
 
-                        {series.genres?.map(
-                            (
-                                genre,
-                                index
-                            ) => (
-                                <span
-                                    key={index}
-                                >
-                                    {genre}
-                                </span>
-                            )
-                        )}
+  // =========================================
+  // NOT FOUND
+  // =========================================
 
-                    </div>
+  if (!series) {
+    return (
+      <div className="series-details-error">
+        <AlertCircle size={24} />
 
-                    {currentVideo && (
-                        <button
-                            className="watch-series-button"
-                            onClick={() =>
-                                handlePlayEpisode(
-                                    0,
-                                    currentVideo
-                                )
-                            }
-                        >
+        <p>
+          {error || "Série não encontrada."}
+        </p>
 
-                            <Play size={18} />
+        <Link to="/series">
+          Voltar para séries
+        </Link>
+      </div>
+    );
+  }
 
-                            Assistir Agora
+  // =========================================
+  // RENDER
+  // =========================================
 
-                        </button>
-                    )}
+  return (
+    <div className="series-details-page">
 
-                </div>
+      {/* =====================================
+          BACKDROP
+      ===================================== */}
 
-            </section>
+      <div className="series-details-backdrop">
+        <img
+          src={
+            series.backdrop ||
+            series.poster
+          }
+          alt={series.title}
+        />
+      </div>
 
-            {/* =====================================
-                PLAYER
-            ===================================== */}
+      <div className="series-details-overlay" />
 
-            {currentVideo && (
-                <section className="series-player-section">
+      {/* =====================================
+          TOPBAR
+      ===================================== */}
 
-                    <div className="series-player-header">
+      <div className="series-details-topbar">
+        <Link
+          to="/series"
+          className="series-back-button"
+        >
+          <ArrowLeft size={18} />
+          Voltar
+        </Link>
+      </div>
 
-                        <div>
+      {/* =====================================
+          HERO
+      ===================================== */}
 
-                            <span>
-                                Temporada{" "}
-                                {selectedSeason + 1}
-                            </span>
+      <section className="series-hero">
 
-                            <h2>
+        <div className="series-hero-poster">
+          <img
+            src={series.poster}
+            alt={series.title}
+          />
+        </div>
 
-                                Episódio{" "}
-                                {
-                                    currentVideo.episodeNumber
-                                }
-                                :{" "}
-                                {
-                                    currentVideo.title
-                                }
+        <div className="series-hero-content">
 
-                            </h2>
+          <h1>{series.title}</h1>
 
-                        </div>
+          <div className="series-meta">
 
-                        {currentVideo.duration && (
-                            <div className="episode-duration">
+            <span>
+              <Tv size={16} />
+              {series.year}
+            </span>
 
-                                <Clock3 size={16} />
+            <span>
+              <Layers3 size={16} />
+              {seasons.length} temporadas
+            </span>
 
-                                {
-                                    currentVideo.duration
-                                }{" "}
-                                min
+            <span>
+              <Play size={16} />
+              {totalEpisodes} episódios
+            </span>
 
-                            </div>
-                        )}
+            <span>
+              <Eye size={16} />
+              {formatViews(series.views)}
+            </span>
 
-                    </div>
+          </div>
 
-                    <div className="series-video-wrapper">
+          <p className="series-overview">
+            {series.overview}
+          </p>
 
-                        <video
-                            ref={videoRef}
-                            key={
-                                currentVideo.videoUrl
-                            }
-                            controls
-                            autoPlay
-                            preload="metadata"
-                            className="series-video"
-                        >
+          <div className="series-genres">
+            {series.genres?.map(
+              (genre, index) => (
+                <span key={index}>
+                  {genre}
+                </span>
+              )
+            )}
+          </div>
 
-                            <source
-                                key={
-                                    currentVideo.videoUrl
-                                }
-                                src={streamUrl}
-                                type="video/mp4"
-                            />
+          {/* ACTIONS */}
 
-                            Seu navegador não suporta vídeo.
+          <div className="series-hero-actions">
 
-                        </video>
-
-                    </div>
-
-                    {currentVideo.overview && (
-                        <p className="episode-overview">
-                            {
-                                currentVideo.overview
-                            }
-                        </p>
-                    )}
-
-                </section>
+            {totalEpisodes > 0 && (
+              <button
+                type="button"
+                className="watch-series-button"
+                onClick={handleWatchNow}
+              >
+                <Play size={18} />
+                Assistir Agora
+              </button>
             )}
 
-            {/* =====================================
-                SEASONS
-            ===================================== */}
+            <button
+              type="button"
+              className={`series-favorite-button ${
+                favorite ? "active" : ""
+              }`}
+              onClick={handleToggleFavorite}
+              disabled={favoriteLoading}
+              aria-pressed={favorite}
+            >
+              {favoriteLoading ? (
+                <Loader2
+                  size={18}
+                  className="spin"
+                />
+              ) : favorite ? (
+                <Check size={18} />
+              ) : (
+                <Heart size={18} />
+              )}
 
-            <section className="series-seasons-section">
+              {favorite
+                ? "Na Minha Lista"
+                : "Minha Lista"}
+            </button>
 
-                <div className="section-title">
+          </div>
 
-                    <h2>
-                        Temporadas
-                    </h2>
-
-                </div>
-
-                <div className="season-list">
-
-                    {series.seasons?.map(
-                        (
-                            season,
-                            seasonIndex
-                        ) => {
-
-                            const isOpen =
-                                expandedSeasons[
-                                seasonIndex
-                                ];
-
-                            return (
-                                <div
-                                    key={
-                                        seasonIndex
-                                    }
-                                    className="season-block"
-                                >
-
-                                    {/* =====================
-                                        HEADER
-                                    ===================== */}
-
-                                    <button
-                                        className="season-toggle"
-                                        onClick={() =>
-                                            toggleSeason(
-                                                seasonIndex
-                                            )
-                                        }
-                                    >
-
-                                        <div>
-
-                                            <h3>
-                                                Temporada{" "}
-                                                {
-                                                    season.seasonNumber
-                                                }
-                                            </h3>
-
-                                            <span>
-                                                {
-                                                    season
-                                                        .episodes
-                                                        ?.length
-                                                }{" "}
-                                                episódios
-                                            </span>
-
-                                        </div>
-
-                                        {isOpen ? (
-                                            <ChevronUp
-                                                size={20}
-                                            />
-                                        ) : (
-                                            <ChevronDown
-                                                size={20}
-                                            />
-                                        )}
-
-                                    </button>
-
-                                    {/* =====================
-                                        EPISODES
-                                    ===================== */}
-
-                                    {isOpen && (
-                                        <div className="episode-list">
-
-                                            {season.episodes?.map(
-                                                (
-                                                    episode,
-                                                    episodeIndex
-                                                ) => (
-                                                    <button
-                                                        key={
-                                                            episodeIndex
-                                                        }
-                                                        className={`episode-item ${currentVideo?._id ===
-                                                                episode._id
-                                                                ? "active"
-                                                                : ""
-                                                            }`}
-                                                        onClick={() =>
-                                                            handlePlayEpisode(
-                                                                seasonIndex,
-                                                                episode
-                                                            )
-                                                        }
-                                                    >
-
-                                                        <div className="episode-thumb">
-
-                                                            {episode.still ? (
-                                                                <img
-                                                                    src={
-                                                                        episode.still
-                                                                    }
-                                                                    alt={
-                                                                        episode.title
-                                                                    }
-                                                                />
-                                                            ) : (
-                                                                <div className="episode-no-thumb">
-
-                                                                    <Play
-                                                                        size={
-                                                                            26
-                                                                        }
-                                                                    />
-
-                                                                </div>
-                                                            )}
-
-                                                        </div>
-
-                                                        <div className="episode-info">
-
-                                                            <div className="episode-title-row">
-
-                                                                <h4>
-
-                                                                    E
-                                                                    {
-                                                                        episode.episodeNumber
-                                                                    }
-                                                                    {" · "}
-                                                                    {
-                                                                        episode.title
-                                                                    }
-
-                                                                </h4>
-
-                                                                <span>
-
-                                                                    <Eye
-                                                                        size={
-                                                                            14
-                                                                        }
-                                                                    />
-
-                                                                    {(
-                                                                        episode.views ||
-                                                                        0
-                                                                    ).toLocaleString()}
-
-                                                                </span>
-
-                                                            </div>
-
-                                                            <p>
-                                                                {
-                                                                    episode.overview
-                                                                }
-                                                            </p>
-
-                                                        </div>
-
-                                                    </button>
-                                                )
-                                            )}
-
-                                        </div>
-                                    )}
-
-                                </div>
-                            );
-                        }
-                    )}
-
-                </div>
-
-            </section>
+          {error && (
+            <p
+              className="series-action-error"
+              role="alert"
+            >
+              <AlertCircle size={16} />
+              {error}
+            </p>
+          )}
 
         </div>
-    );
+      </section>
+
+      {/* =====================================
+          PLAYER
+      ===================================== */}
+
+      {currentEpisode && (
+        <section
+          ref={playerRef}
+          className="series-player-section"
+        >
+
+          <div className="series-player-header">
+
+            <div>
+              <span>
+                {currentSeasonNumber === 0
+                  ? "Especiais"
+                  : `Temporada ${currentSeasonNumber}`}
+              </span>
+
+              <h2>
+                Episódio{" "}
+                {currentEpisode.episodeNumber}
+                : {currentEpisode.title}
+              </h2>
+            </div>
+
+            {currentEpisode.duration > 0 && (
+              <div className="episode-duration">
+                <Clock3 size={16} />
+                {currentEpisode.duration} min
+              </div>
+            )}
+
+          </div>
+
+          <div className="series-video-wrapper">
+
+            {playbackRequested && streamUrl ? (
+              <video
+                ref={videoRef}
+                key={currentEpisodeKey}
+                controls
+                playsInline
+                preload="metadata"
+                className="series-video"
+                onError={() => {
+                  setPlaybackError(
+                    "Não foi possível carregar o vídeo."
+                  );
+                }}
+              >
+                <source
+                  src={streamUrl}
+                  type="video/mp4"
+                />
+
+                Seu navegador não suporta vídeo.
+              </video>
+            ) : (
+              <div className="series-player-placeholder">
+
+                {currentEpisode.still && (
+                  <img
+                    src={currentEpisode.still}
+                    alt={currentEpisode.title}
+                  />
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const season = seasons.find(
+                      (item) =>
+                        item.seasonNumber ===
+                        currentSeasonNumber
+                    );
+
+                    if (season) {
+                      handlePlayEpisode(
+                        season,
+                        currentEpisode
+                      );
+                    }
+                  }}
+                >
+                  <Play size={28} />
+                  Reproduzir episódio
+                </button>
+
+              </div>
+            )}
+
+          </div>
+
+          {playbackError && (
+            <p
+              className="series-playback-error"
+              role="alert"
+            >
+              <AlertCircle size={16} />
+              {playbackError}
+            </p>
+          )}
+
+          {currentEpisode.overview && (
+            <p className="episode-overview">
+              {currentEpisode.overview}
+            </p>
+          )}
+
+        </section>
+      )}
+
+      {/* =====================================
+          SEASONS
+      ===================================== */}
+
+      <section className="series-seasons-section">
+
+        <div className="section-title">
+          <h2>Temporadas</h2>
+        </div>
+
+        {seasons.length === 0 ? (
+          <p className="series-empty-message">
+            Nenhuma temporada cadastrada.
+          </p>
+        ) : (
+          <div className="season-list">
+
+            {seasons.map((season) => {
+              const isOpen = Boolean(
+                expandedSeasons[
+                  season.seasonNumber
+                ]
+              );
+
+              return (
+                <div
+                  key={
+                    season._id ||
+                    season.seasonNumber
+                  }
+                  className="season-block"
+                >
+
+                  {/* SEASON HEADER */}
+
+                  <button
+                    type="button"
+                    className="season-toggle"
+                    onClick={() =>
+                      toggleSeason(
+                        season.seasonNumber
+                      )
+                    }
+                    aria-expanded={isOpen}
+                  >
+                    <div>
+                      <h3>
+                        {getSeasonTitle(season)}
+                      </h3>
+
+                      <span>
+                        {season.episodes.length}{" "}
+                        episódios
+                      </span>
+                    </div>
+
+                    {isOpen ? (
+                      <ChevronUp size={20} />
+                    ) : (
+                      <ChevronDown size={20} />
+                    )}
+                  </button>
+
+                  {/* EPISODES */}
+
+                  {isOpen && (
+                    <div className="episode-list">
+
+                      {season.episodes.length === 0 ? (
+                        <p className="series-empty-message">
+                          Nenhum episódio nesta
+                          temporada.
+                        </p>
+                      ) : (
+                        season.episodes.map(
+                          (episode) => {
+                            const isActive =
+                              currentSeasonNumber ===
+                                season.seasonNumber &&
+                              currentEpisode?.episodeNumber ===
+                                episode.episodeNumber;
+
+                            return (
+                              <button
+                                type="button"
+                                key={getEpisodeKey(
+                                  season.seasonNumber,
+                                  episode
+                                )}
+                                className={`episode-item ${
+                                  isActive
+                                    ? "active"
+                                    : ""
+                                }`}
+                                onClick={() =>
+                                  handlePlayEpisode(
+                                    season,
+                                    episode
+                                  )
+                                }
+                              >
+
+                                <div className="episode-thumb">
+                                  {episode.still ? (
+                                    <img
+                                      src={episode.still}
+                                      alt={episode.title}
+                                      loading="lazy"
+                                    />
+                                  ) : (
+                                    <div className="episode-no-thumb">
+                                      <Play size={26} />
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="episode-info">
+
+                                  <div className="episode-title-row">
+
+                                    <h4>
+                                      E{episode.episodeNumber}
+                                      {" · "}
+                                      {episode.title}
+                                    </h4>
+
+                                    <span>
+                                      <Eye size={14} />
+                                      {formatViews(
+                                        episode.views
+                                      )}
+                                    </span>
+
+                                  </div>
+
+                                  {episode.overview && (
+                                    <p>
+                                      {episode.overview}
+                                    </p>
+                                  )}
+
+                                  {episode.duration > 0 && (
+                                    <span className="episode-duration">
+                                      <Clock3 size={14} />
+                                      {episode.duration} min
+                                    </span>
+                                  )}
+
+                                </div>
+
+                              </button>
+                            );
+                          }
+                        )
+                      )}
+
+                    </div>
+                  )}
+
+                </div>
+              );
+            })}
+
+          </div>
+        )}
+
+      </section>
+
+    </div>
+  );
 }

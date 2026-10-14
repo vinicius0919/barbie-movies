@@ -1,0 +1,350 @@
+
+/* ==========================================
+   MIQFLIX - AUTH PAGE
+========================================== */
+
+.miqflix-auth {
+  --auth-bg: #09090d;
+  --auth-surface: #171820;
+  --auth-border: rgba(255, 255, 255, 0.1);
+  --auth-text: #f5f5f7;
+  --auth-muted: #a5a5b2;
+  --auth-primary: #e50914;
+  --auth-primary-hover: #ff2633;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+
+  padding: 90px 20px 50px;
+  box-sizing: border-box;
+
+  background:
+    radial-gradient(
+      ellipse at 50% 0%,
+      rgba(229, 9, 20, 0.13),
+      transparent 60%
+    ),
+    var(--auth-bg);
+
+  color: var(--auth-text);
+  font-family: inherit;
+}
+
+.miqflix-auth *,
+.miqflix-auth *::before,
+.miqflix-auth *::after {
+  box-sizing: border-box;
+}
+
+/* ==========================================
+   CARD
+========================================== */
+
+.miqflix-auth-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  width: 100%;
+  max-width: 440px;
+
+  padding: 42px 38px;
+
+  background: linear-gradient(
+    155deg,
+    #1b1c25 0%,
+    #121319 100%
+  );
+
+  border: 1px solid var(--auth-border);
+  border-radius: 20px;
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+/* ==========================================
+   LOGOTIPO
+========================================== */
+
+.miqflix-auth-card > h1 {
+  margin: 0;
+
+  color: var(--auth-primary);
+  font-size: 2.4rem;
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  line-height: 1.1;
+  text-align: center;
+}
+
+/* ==========================================
+   TÍTULO
+========================================== */
+
+.miqflix-auth-card > h2 {
+  margin: 0 0 8px;
+
+  color: #fff;
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  text-align: center;
+}
+
+/* ==========================================
+   LABELS
+========================================== */
+
+.miqflix-auth-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+
+  width: 100%;
+
+  color: #d8d9e0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* ==========================================
+   INPUTS
+========================================== */
+
+.miqflix-auth-card input {
+  width: 100%;
+  min-height: 48px;
+
+  padding: 12px 15px;
+
+  background: #101116;
+
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 10px;
+
+  outline: none;
+
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.95rem;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.miqflix-auth-card input:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.miqflix-auth-card input:focus {
+  background: #15161d;
+
+  border-color: var(--auth-primary);
+
+  box-shadow:
+    0 0 0 3px rgba(229, 9, 20, 0.12);
+}
+
+.miqflix-auth-card input::placeholder {
+  color: #777985;
+}
+
+.miqflix-auth-card input:-webkit-autofill {
+  -webkit-text-fill-color: #fff;
+
+  box-shadow:
+    0 0 0 1000px #101116 inset;
+
+  transition:
+    background-color 9999s ease-in-out;
+}
+
+/* ==========================================
+   BOTÃO PRINCIPAL
+========================================== */
+
+.miqflix-auth-card > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-height: 49px;
+
+  margin-top: 8px;
+  padding: 13px 20px;
+
+  background: var(--auth-primary);
+
+  border: 1px solid transparent;
+  border-radius: 10px;
+
+  color: #fff;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.miqflix-auth-card > button:hover:not(:disabled) {
+  background: var(--auth-primary-hover);
+
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 8px 24px rgba(229, 9, 20, 0.25);
+}
+
+.miqflix-auth-card > button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.miqflix-auth-card > button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ==========================================
+   LINK LOGIN / CADASTRO
+========================================== */
+
+.miqflix-auth-card > p:not(.form-error) {
+  margin: 6px 0 0;
+
+  color: var(--auth-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.miqflix-auth-card > p a {
+  color: #ff4b55;
+  font-weight: 700;
+  text-decoration: none;
+
+  transition: color 0.2s ease;
+}
+
+.miqflix-auth-card > p a:hover {
+  color: #ff7780;
+  text-decoration: underline;
+}
+
+/* ==========================================
+   ERROS
+========================================== */
+
+.miqflix-auth-card .form-error {
+  margin: 0;
+  padding: 13px 15px;
+
+  background: rgba(239, 68, 68, 0.09);
+
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 10px;
+
+  color: #fca5a5;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* ==========================================
+   ACESSIBILIDADE
+========================================== */
+
+.miqflix-auth-card button:focus-visible,
+.miqflix-auth-card a:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+}
+
+/* ==========================================
+   TABLET
+========================================== */
+
+@media (max-width: 768px) {
+  .miqflix-auth {
+    padding: 80px 20px 40px;
+  }
+
+  .miqflix-auth-card {
+    padding: 36px 30px;
+  }
+
+  .miqflix-auth-card > h1 {
+    font-size: 2.2rem;
+  }
+}
+
+/* ==========================================
+   MOBILE
+========================================== */
+
+@media (max-width: 480px) {
+  .miqflix-auth {
+    align-items: center;
+    padding: 75px 16px 30px;
+  }
+
+  .miqflix-auth-card {
+    gap: 18px;
+    padding: 30px 22px;
+    border-radius: 16px;
+  }
+
+  .miqflix-auth-card > h1 {
+    font-size: 2rem;
+  }
+
+  .miqflix-auth-card > h2 {
+    font-size: 1.3rem;
+  }
+
+  .miqflix-auth-card input {
+    font-size: 16px;
+  }
+}
+
+/* ==========================================
+   TELAS MUITO PEQUENAS
+========================================== */
+
+@media (max-width: 360px) {
+  .miqflix-auth {
+    padding-inline: 12px;
+  }
+
+  .miqflix-auth-card {
+    padding: 26px 18px;
+  }
+}
+
+/* ==========================================
+   REDUÇÃO DE MOVIMENTO
+========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .miqflix-auth *,
+  .miqflix-auth *::before,
+  .miqflix-auth *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

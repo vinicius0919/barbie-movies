@@ -2,6 +2,7 @@
 import {
   Routes,
   Route,
+  Navigate,
 } from "react-router-dom";
 
 import { AuthProvider } from "./contexts/AuthContext";
@@ -28,6 +29,7 @@ export default function App() {
     <AuthProvider>
       <Layout>
         <Routes>
+
           {/* PÁGINAS PÚBLICAS */}
 
           <Route
@@ -53,6 +55,7 @@ export default function App() {
           {/* ROTAS AUTENTICADAS */}
 
           <Route element={<ProtectedRoute />}>
+
             <Route
               path="/checkout/retorno"
               element={<CheckoutReturn />}
@@ -63,9 +66,10 @@ export default function App() {
               element={<Favorites />}
             />
 
-            {/* CONTEÚDO EXCLUSIVO PARA ASSINANTES */}
+            {/* CONTEÚDO PARA ASSINANTES */}
 
             <Route element={<SubscriptionRoute />}>
+
               <Route
                 path="/movie/:id"
                 element={<Player />}
@@ -75,6 +79,7 @@ export default function App() {
                 path="/series/:id"
                 element={<SeriesDetails />}
               />
+
             </Route>
 
             {/* ADMINISTRAÇÃO */}
@@ -84,16 +89,31 @@ export default function App() {
                 <ProtectedRoute adminOnly />
               }
             >
+
               <Route
                 path="/admin"
                 element={<Admin />}
               />
 
               <Route
-                path="/series"
+                path="/admin/series"
                 element={<SeriesManager />}
               />
+
+              {/* COMPATIBILIDADE COM ROTA ANTIGA */}
+
+              <Route
+                path="/series"
+                element={
+                  <Navigate
+                    to="/admin/series"
+                    replace
+                  />
+                }
+              />
+
             </Route>
+
           </Route>
 
           {/* PÁGINA NÃO ENCONTRADA */}
@@ -101,11 +121,12 @@ export default function App() {
           <Route
             path="*"
             element={
-              <main>
+              <div className="not-found-page">
                 <h1>Página não encontrada</h1>
-              </main>
+              </div>
             }
           />
+
         </Routes>
       </Layout>
     </AuthProvider>

@@ -1,0 +1,325 @@
+
+/* ==========================================
+   MIQFLIX - CHECKOUT RETURN
+========================================== */
+
+.checkout-return {
+  --checkout-bg: #08090d;
+  --checkout-surface: #15171f;
+  --checkout-border: rgba(255, 255, 255, 0.1);
+  --checkout-primary: #e50914;
+  --checkout-primary-hover: #ff2430;
+  --checkout-text: #f5f5f7;
+  --checkout-muted: #a4a6b3;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-height: 100vh;
+
+  box-sizing: border-box;
+
+  padding: 110px 24px 70px;
+
+  background:
+    radial-gradient(
+      ellipse at 50% 25%,
+      rgba(229, 9, 20, 0.1),
+      transparent 55%
+    ),
+    var(--checkout-bg);
+
+  color: var(--checkout-text);
+  font-family: inherit;
+  text-align: center;
+}
+
+.checkout-return *,
+.checkout-return *::before,
+.checkout-return *::after {
+  box-sizing: border-box;
+}
+
+/* ==========================================
+   ÍCONE DECORATIVO
+========================================== */
+
+.checkout-return::before {
+  content: "";
+
+  display: block;
+
+  width: 80px;
+  height: 80px;
+
+  margin-bottom: 30px;
+
+  border: 4px solid rgba(229, 9, 20, 0.15);
+  border-top-color: var(--checkout-primary);
+  border-radius: 50%;
+
+  animation: checkout-spin 1s linear infinite;
+}
+
+@keyframes checkout-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==========================================
+   TÍTULOS
+========================================== */
+
+.checkout-return h1 {
+  max-width: 650px;
+
+  margin: 0 0 18px;
+
+  color: #fff;
+  font-size: clamp(1.8rem, 4vw, 2.7rem);
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1.2;
+}
+
+/* ==========================================
+   TEXTOS
+========================================== */
+
+.checkout-return p {
+  width: 100%;
+  max-width: 510px;
+
+  margin: 0 0 15px;
+
+  color: var(--checkout-muted);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.checkout-return p:last-of-type {
+  margin-bottom: 28px;
+}
+
+/* ==========================================
+   LINKS E BOTÕES
+========================================== */
+
+.checkout-return a,
+.checkout-return button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  width: 100%;
+  max-width: 320px;
+  min-height: 48px;
+
+  padding: 13px 22px;
+  margin: 8px 0;
+
+  background: var(--checkout-primary);
+
+  border: 1px solid transparent;
+  border-radius: 10px;
+
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.checkout-return a:hover,
+.checkout-return button:hover:not(:disabled) {
+  background: var(--checkout-primary-hover);
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 8px 24px rgba(229, 9, 20, 0.2);
+}
+
+.checkout-return button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==========================================
+   BOTÃO SECUNDÁRIO
+========================================== */
+
+.checkout-return button + a,
+.checkout-return a + a {
+  background: transparent;
+  border-color: var(--checkout-border);
+
+  color: #d0d1d9;
+}
+
+.checkout-return button + a:hover,
+.checkout-return a + a:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+
+  box-shadow: none;
+}
+
+/* ==========================================
+   LOADING
+========================================== */
+
+.checkout-return .checkout-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  margin-top: 12px;
+
+  color: var(--checkout-muted);
+  font-size: 0.9rem;
+}
+
+/* ==========================================
+   ESTADO ATIVO
+========================================== */
+
+.checkout-return.checkout-success::before {
+  content: "✓";
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 80px;
+  height: 80px;
+
+  background: rgba(74, 222, 128, 0.1);
+  border: 2px solid rgba(74, 222, 128, 0.4);
+
+  color: #4ade80;
+  font-size: 2.5rem;
+  font-weight: 700;
+
+  animation: checkout-success-in 0.4s ease-out;
+}
+
+@keyframes checkout-success-in {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ==========================================
+   ESTADO PENDENTE
+========================================== */
+
+.checkout-return.checkout-pending::before {
+  content: "!";
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(245, 158, 11, 0.1);
+  border: 2px solid rgba(245, 158, 11, 0.4);
+
+  color: #fbbf24;
+  font-size: 2.5rem;
+  font-weight: 700;
+
+  animation: none;
+}
+
+/* ==========================================
+   ESTADO DE ERRO
+========================================== */
+
+.checkout-return.checkout-error::before,
+.checkout-return.checkout-unauthorized::before {
+  content: "×";
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(239, 68, 68, 0.1);
+  border: 2px solid rgba(239, 68, 68, 0.4);
+
+  color: #f87171;
+  font-size: 2.8rem;
+  font-weight: 500;
+
+  animation: none;
+}
+
+/* ==========================================
+   RESPONSIVIDADE
+========================================== */
+
+@media (max-width: 768px) {
+  .checkout-return {
+    padding: 100px 20px 60px;
+  }
+
+  .checkout-return::before {
+    width: 68px;
+    height: 68px;
+    margin-bottom: 25px;
+  }
+
+  .checkout-return h1 {
+    font-size: 1.9rem;
+  }
+
+  .checkout-return p {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .checkout-return {
+    padding: 90px 18px 50px;
+  }
+
+  .checkout-return h1 {
+    font-size: 1.7rem;
+  }
+
+  .checkout-return a,
+  .checkout-return button {
+    max-width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .checkout-return::before {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+  }
+
+  .checkout-return *,
+  .checkout-return *::before,
+  .checkout-return *::after {
+    transition-duration: 0.01ms !important;
+  }
+}

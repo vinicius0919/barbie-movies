@@ -1,0 +1,583 @@
+
+/* ==========================================
+   MIQFLIX - SUBSCRIPTION PAGE
+========================================== */
+
+.miqflix-subscription {
+  --subscription-bg: #09090d;
+  --subscription-card: #171820;
+  --subscription-card-hover: #1d1e28;
+  --subscription-border: rgba(255, 255, 255, 0.09);
+  --subscription-text: #f5f5f7;
+  --subscription-muted: #a5a5b2;
+  --subscription-primary: #e50914;
+  --subscription-primary-hover: #ff2633;
+  --subscription-success: #4ade80;
+
+  width: 100%;
+  min-height: 100vh;
+
+  box-sizing: border-box;
+
+  padding: 110px 24px 80px;
+
+  background:
+    radial-gradient(
+      ellipse at 50% 0%,
+      rgba(229, 9, 20, 0.12),
+      transparent 55%
+    ),
+    var(--subscription-bg);
+
+  color: var(--subscription-text);
+  font-family: inherit;
+}
+
+.miqflix-subscription *,
+.miqflix-subscription *::before,
+.miqflix-subscription *::after {
+  box-sizing: border-box;
+}
+
+/* ==========================================
+   TÍTULO PRINCIPAL
+========================================== */
+
+.miqflix-subscription > h1 {
+  max-width: 900px;
+
+  margin: 0 auto 55px;
+
+  color: #ffffff;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -1.4px;
+  text-align: center;
+}
+
+/* ==========================================
+   GRID DOS PLANOS
+========================================== */
+
+.subscription-plans {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(min(100%, 280px), 1fr)
+    );
+
+  align-items: stretch;
+  gap: 24px;
+
+  width: 100%;
+  max-width: 1100px;
+
+  margin: 0 auto;
+}
+
+/* ==========================================
+   CARTÃO DO PLANO
+========================================== */
+
+.subscription-plan {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+  min-height: 350px;
+
+  padding: 34px 30px;
+
+  background: linear-gradient(
+    155deg,
+    #1c1d27 0%,
+    #111218 100%
+  );
+
+  border: 1px solid var(--subscription-border);
+  border-radius: 18px;
+
+  box-shadow:
+    0 12px 35px rgba(0, 0, 0, 0.15);
+
+  transition:
+    transform 0.25s ease,
+    background 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.subscription-plan:hover {
+  transform: translateY(-6px);
+
+  border-color: rgba(229, 9, 20, 0.5);
+
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.3),
+    0 0 30px rgba(229, 9, 20, 0.05);
+}
+
+/* ==========================================
+   DETALHE DECORATIVO SUPERIOR
+========================================== */
+
+.subscription-plan::before {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  left: 30px;
+  right: 30px;
+
+  height: 2px;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(229, 9, 20, 0.7),
+    transparent
+  );
+
+  opacity: 0.65;
+}
+
+/* ==========================================
+   NOME DO PLANO
+========================================== */
+
+.subscription-plan h2 {
+  margin: 0 0 16px;
+
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 750;
+  letter-spacing: -0.5px;
+  line-height: 1.3;
+}
+
+/* ==========================================
+   DESCRIÇÃO DO PLANO
+========================================== */
+
+.subscription-plan > p {
+  margin: 0 0 18px;
+
+  color: var(--subscription-muted);
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+/* ==========================================
+   PREÇO DO PLANO
+========================================== */
+
+.subscription-plan > strong {
+  display: block;
+
+  margin: 10px 0 8px;
+
+  color: #ffffff;
+  font-size: clamp(2rem, 3vw, 2.65rem);
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+/* Texto de duração ou recorrência */
+
+.subscription-plan > strong + p {
+  margin: 0 0 30px;
+
+  color: #c0c1cb;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+/* ==========================================
+   BOTÃO DE ASSINATURA
+========================================== */
+
+.subscription-plan > button,
+.subscription-plan > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  width: 100%;
+  min-height: 48px;
+
+  padding: 13px 18px;
+  margin-top: auto;
+
+  background: var(--subscription-primary);
+
+  border: 1px solid transparent;
+  border-radius: 10px;
+
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  text-decoration: none;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.subscription-plan > button:hover:not(:disabled),
+.subscription-plan > a:hover {
+  background: var(--subscription-primary-hover);
+
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 8px 24px rgba(229, 9, 20, 0.25);
+}
+
+.subscription-plan > button:active:not(:disabled),
+.subscription-plan > a:active {
+  transform: translateY(0);
+}
+
+.subscription-plan > button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ==========================================
+   ASSINATURA ATIVA
+========================================== */
+
+.subscription-active {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  width: 100%;
+  max-width: 620px;
+
+  margin: 0 auto;
+  padding: 45px 36px;
+
+  background: linear-gradient(
+    145deg,
+    rgba(29, 55, 40, 0.7),
+    rgba(16, 22, 19, 0.95)
+  );
+
+  border: 1px solid rgba(74, 222, 128, 0.25);
+  border-radius: 20px;
+
+  box-shadow:
+    0 20px 55px rgba(0, 0, 0, 0.2);
+
+  text-align: center;
+}
+
+/* Ícone de confirmação */
+
+.subscription-active::before {
+  content: "✓";
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 72px;
+  height: 72px;
+
+  margin-bottom: 26px;
+
+  background: rgba(74, 222, 128, 0.12);
+
+  border: 2px solid rgba(74, 222, 128, 0.35);
+  border-radius: 50%;
+
+  color: var(--subscription-success);
+  font-size: 2.3rem;
+  font-weight: 700;
+}
+
+/* Título */
+
+.subscription-active h2 {
+  margin: 0 0 14px;
+
+  color: #ffffff;
+  font-size: clamp(1.5rem, 3vw, 1.9rem);
+  font-weight: 750;
+  letter-spacing: -0.5px;
+}
+
+/* Validade */
+
+.subscription-active p {
+  margin: 0 0 30px;
+
+  color: #c3d5c9;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+/* Botão continuar assistindo */
+
+.subscription-active a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  max-width: 280px;
+  min-height: 48px;
+
+  padding: 13px 22px;
+
+  background: var(--subscription-primary);
+  border: 1px solid transparent;
+  border-radius: 10px;
+
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration: none;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.subscription-active a:hover {
+  background: var(--subscription-primary-hover);
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 8px 24px rgba(229, 9, 20, 0.2);
+}
+
+/* ==========================================
+   ERROS
+========================================== */
+
+.miqflix-subscription .subscription-error {
+  width: 100%;
+  max-width: 650px;
+
+  margin: 0 auto 30px;
+  padding: 16px 20px;
+
+  background: rgba(239, 68, 68, 0.08);
+
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+
+  color: #fca5a5;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* ==========================================
+   LOADING
+========================================== */
+
+.miqflix-subscription > p[role="status"] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+
+  min-height: 50vh;
+
+  margin: 0;
+
+  color: var(--subscription-muted);
+  font-size: 1rem;
+  text-align: center;
+}
+
+.miqflix-subscription > p[role="status"]::before {
+  content: "";
+
+  display: block;
+
+  width: 46px;
+  height: 46px;
+
+  border: 3px solid rgba(229, 9, 20, 0.15);
+  border-top-color: var(--subscription-primary);
+  border-radius: 50%;
+
+  animation: subscription-spin 0.8s linear infinite;
+}
+
+@keyframes subscription-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==========================================
+   SEM PLANOS DISPONÍVEIS
+========================================== */
+
+.subscription-plans > p {
+  grid-column: 1 / -1;
+
+  max-width: 600px;
+  width: 100%;
+
+  margin: 20px auto;
+  padding: 30px;
+
+  background: var(--subscription-card);
+
+  border: 1px solid var(--subscription-border);
+  border-radius: 14px;
+
+  color: var(--subscription-muted);
+  text-align: center;
+  line-height: 1.7;
+}
+
+/* ==========================================
+   ACESSIBILIDADE
+========================================== */
+
+.miqflix-subscription button:focus-visible,
+.miqflix-subscription a:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 4px;
+}
+
+/* ==========================================
+   RESPONSIVIDADE - TABLET
+========================================== */
+
+@media (max-width: 900px) {
+  .miqflix-subscription {
+    padding: 95px 22px 65px;
+  }
+
+  .miqflix-subscription > h1 {
+    margin-bottom: 40px;
+  }
+
+  .subscription-plans {
+    gap: 20px;
+  }
+
+  .subscription-plan {
+    padding: 28px 24px;
+  }
+}
+
+/* ==========================================
+   RESPONSIVIDADE - MOBILE
+========================================== */
+
+@media (max-width: 600px) {
+  .miqflix-subscription {
+    padding: 85px 18px 50px;
+  }
+
+  .miqflix-subscription > h1 {
+    margin-bottom: 32px;
+
+    font-size: 2rem;
+    letter-spacing: -0.8px;
+  }
+
+  .subscription-plans {
+    grid-template-columns: 1fr;
+    gap: 18px;
+
+    max-width: 460px;
+  }
+
+  .subscription-plan {
+    min-height: 310px;
+    padding: 28px 22px;
+  }
+
+  .subscription-plan h2 {
+    font-size: 1.35rem;
+  }
+
+  .subscription-plan > strong {
+    font-size: 2.3rem;
+  }
+
+  .subscription-active {
+    padding: 35px 24px;
+  }
+
+  .subscription-active::before {
+    width: 62px;
+    height: 62px;
+
+    font-size: 2rem;
+  }
+
+  .subscription-active h2 {
+    font-size: 1.6rem;
+  }
+}
+
+/* ==========================================
+   TELAS MUITO PEQUENAS
+========================================== */
+
+@media (max-width: 380px) {
+  .miqflix-subscription {
+    padding-inline: 14px;
+  }
+
+  .miqflix-subscription > h1 {
+    font-size: 1.75rem;
+  }
+
+  .subscription-plan {
+    padding: 24px 18px;
+  }
+
+  .subscription-plan > strong {
+    font-size: 2rem;
+  }
+
+  .subscription-active {
+    padding: 30px 18px;
+  }
+}
+
+/* ==========================================
+   REDUÇÃO DE MOVIMENTO
+========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .miqflix-subscription *,
+  .miqflix-subscription *::before,
+  .miqflix-subscription *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

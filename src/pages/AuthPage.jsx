@@ -1,22 +1,13 @@
-
+import "./AuthPage.css";
 import { useState } from "react";
-import {
-  Link,
-  Navigate,
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../contexts/AuthContext";
 
 export default function AuthPage({ mode = "login" }) {
   const isRegister = mode === "register";
 
-  const {
-    user,
-    login,
-    register,
-  } = useAuth();
+  const { user, login, register } = useAuth();
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -43,8 +34,11 @@ export default function AuthPage({ mode = "login" }) {
         await login(email, password);
       }
 
-      const destination =
-        location.state?.from?.pathname || "/";
+      const from = location.state?.from;
+
+      const destination = from?.pathname
+        ? `${from.pathname}${from.search || ""}${from.hash || ""}`
+        : "/";
 
       navigate(destination, { replace: true });
     } catch (err) {
@@ -56,17 +50,10 @@ export default function AuthPage({ mode = "login" }) {
 
   return (
     <main className="miqflix-auth">
-      <form
-        className="miqflix-auth-card"
-        onSubmit={handleSubmit}
-      >
+      <form className="miqflix-auth-card" onSubmit={handleSubmit}>
         <h1>MiqFlix</h1>
 
-        <h2>
-          {isRegister
-            ? "Crie sua conta"
-            : "Entre na sua conta"}
-        </h2>
+        <h2>{isRegister ? "Crie sua conta" : "Entre na sua conta"}</h2>
 
         {error && (
           <p role="alert" className="form-error">
@@ -105,32 +92,19 @@ export default function AuthPage({ mode = "login" }) {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            autoComplete={
-              isRegister
-                ? "new-password"
-                : "current-password"
-            }
+            autoComplete={isRegister ? "new-password" : "current-password"}
             minLength={8}
             required
           />
         </label>
 
         <button type="submit" disabled={submitting}>
-          {submitting
-            ? "Aguarde..."
-            : isRegister
-              ? "Criar conta"
-              : "Entrar"}
+          {submitting ? "Aguarde..." : isRegister ? "Criar conta" : "Entrar"}
         </button>
 
         <p>
-          {isRegister
-            ? "Já possui uma conta?"
-            : "Ainda não possui uma conta?"}
-          {" "}
-          <Link
-            to={isRegister ? "/login" : "/register"}
-          >
+          {isRegister ? "Já possui uma conta?" : "Ainda não possui uma conta?"}{" "}
+          <Link to={isRegister ? "/login" : "/register"}>
             {isRegister ? "Entrar" : "Cadastrar"}
           </Link>
         </p>
