@@ -11,6 +11,7 @@ export default function SeriesSeasons({
   expandedSeasons,
   onToggleSeason,
   onSelectEpisode,
+  poster
 }) {
   return (
     <section className="series-seasons-section">
@@ -70,6 +71,7 @@ export default function SeriesSeasons({
                             `${season.seasonNumber}-${episode.episodeNumber}`
                           }
                           episode={episode}
+                          poster={poster}
                           active={
                             selection?.seasonNumber ===
                               season.seasonNumber &&

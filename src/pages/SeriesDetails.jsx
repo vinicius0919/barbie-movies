@@ -428,6 +428,7 @@ export default function SeriesDetails() {
       </div>
 
       <SeriesSeasons
+        poster={series.poster}
         seasons={seasons}
         selection={selection}
         expandedSeasons={expandedSeasons}

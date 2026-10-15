@@ -7,7 +7,11 @@ export default function SeriesEpisodeCard({
   episode,
   active,
   onSelect,
+  poster
 }) {
+
+    console.log("SeriesEpisodeCard - episode", episode);
+    console.log("SeriesEpisodeCard - poster", poster);
   return (
     <button
       type="button"
@@ -16,17 +20,11 @@ export default function SeriesEpisodeCard({
       aria-current={active ? "true" : undefined}
     >
       <div className="episode-thumb">
-        {episode.still ? (
           <img
-            src={episode.still}
+            src={episode.still? episode.still : poster}
             alt={episode.title}
             loading="lazy"
           />
-        ) : (
-          <div className="episode-no-thumb">
-            <Play size={26} />
-          </div>
-        )}
       </div>
 
       <div className="episode-info">
