@@ -1,4 +1,3 @@
-
 import "./Navbar.css";
 
 import {
@@ -10,16 +9,9 @@ import {
   LogOut,
 } from "lucide-react";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 
-import {
-  Link,
-  useNavigate,
-} from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { useDebounce } from "use-debounce";
 
@@ -30,18 +22,9 @@ import { useAuth } from "../contexts/AuthContext";
 import { GENRE_ROWS } from "../config/genres";
 
 export default function Navbar({ toggleSidebar }) {
-  const {
-    setSearch,
-    genreFilter,
-    setGenreFilter,
-  } = useSearch();
+  const { setSearch, genreFilter, setGenreFilter } = useSearch();
 
-  const {
-    user,
-    loading: authLoading,
-    isAuthenticated,
-    logout,
-  } = useAuth();
+  const { user, loading: authLoading, isAuthenticated, logout } = useAuth();
 
   const navigate = useNavigate();
   const accountRef = useRef(null);
@@ -52,6 +35,10 @@ export default function Navbar({ toggleSidebar }) {
   const [accountOpen, setAccountOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
+
+  const location = useLocation();
+
+  const showMovieSearch = location.pathname === "/";
 
   // =============================================
   // PESQUISA
@@ -69,10 +56,7 @@ export default function Navbar({ toggleSidebar }) {
     if (!accountOpen) return;
 
     function handleOutsideClick(event) {
-      if (
-        accountRef.current &&
-        !accountRef.current.contains(event.target)
-      ) {
+      if (accountRef.current && !accountRef.current.contains(event.target)) {
         setAccountOpen(false);
       }
     }
@@ -83,26 +67,14 @@ export default function Navbar({ toggleSidebar }) {
       }
     }
 
-    document.addEventListener(
-      "pointerdown",
-      handleOutsideClick
-    );
+    document.addEventListener("pointerdown", handleOutsideClick);
 
-    document.addEventListener(
-      "keydown",
-      handleKeyDown
-    );
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener(
-        "pointerdown",
-        handleOutsideClick
-      );
+      document.removeEventListener("pointerdown", handleOutsideClick);
 
-      document.removeEventListener(
-        "keydown",
-        handleKeyDown
-      );
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [accountOpen]);
 
@@ -122,9 +94,7 @@ export default function Navbar({ toggleSidebar }) {
       setAccountOpen(false);
       navigate("/", { replace: true });
     } catch (error) {
-      setLogoutError(
-        error.message || "Não foi possível sair da conta."
-      );
+      setLogoutError(error.message || "Não foi possível sair da conta.");
     } finally {
       setLoggingOut(false);
     }
@@ -135,13 +105,9 @@ export default function Navbar({ toggleSidebar }) {
   // =============================================
 
   const displayName =
-    user?.name?.trim() ||
-    user?.email?.split("@")[0] ||
-    "Minha conta";
+    user?.name?.trim() || user?.email?.split("@")[0] || "Minha conta";
 
-  const initial = displayName
-    .charAt(0)
-    .toLocaleUpperCase("pt-BR");
+  const initial = displayName.charAt(0).toLocaleUpperCase("pt-BR");
 
   // =============================================
   // RENDERIZAÇÃO
@@ -166,11 +132,7 @@ export default function Navbar({ toggleSidebar }) {
             className="logo-wrapper"
             aria-label="MiqFlix - Página inicial"
           >
-            <img
-              src={Miq}
-              alt=""
-              className="MiqFace"
-            />
+            <img src={Miq} alt="" className="MiqFace" />
 
             <h1 className="logo">MiqFlix</h1>
           </Link>
@@ -180,27 +142,18 @@ export default function Navbar({ toggleSidebar }) {
         <div className="navbar-auth">
           {!authLoading && !isAuthenticated && (
             <div className="navbar-guest-actions">
-              <Link
-                to="/login"
-                className="navbar-login-link"
-              >
+              <Link to="/login" className="navbar-login-link">
                 Entrar
               </Link>
 
-              <Link
-                to="/subscription"
-                className="navbar-subscribe-link"
-              >
+              <Link to="/subscription" className="navbar-subscribe-link">
                 Assinar
               </Link>
             </div>
           )}
 
           {!authLoading && isAuthenticated && (
-            <div
-              className="navbar-account"
-              ref={accountRef}
-            >
+            <div className="navbar-account" ref={accountRef}>
               <button
                 type="button"
                 className="navbar-account-trigger"
@@ -212,19 +165,13 @@ export default function Navbar({ toggleSidebar }) {
                   setLogoutError("");
                 }}
               >
-                <span className="navbar-avatar">
-                  {initial}
-                </span>
+                <span className="navbar-avatar">{initial}</span>
 
-                <span className="navbar-account-label">
-                  {displayName}
-                </span>
+                <span className="navbar-account-label">{displayName}</span>
 
                 <ChevronDown
                   size={16}
-                  className={
-                    accountOpen ? "chevron-open" : ""
-                  }
+                  className={accountOpen ? "chevron-open" : ""}
                 />
               </button>
 
@@ -263,16 +210,11 @@ export default function Navbar({ toggleSidebar }) {
                   >
                     <LogOut size={18} />
 
-                    {loggingOut
-                      ? "Saindo..."
-                      : "Sair da conta"}
+                    {loggingOut ? "Saindo..." : "Sair da conta"}
                   </button>
 
                   {logoutError && (
-                    <p
-                      className="navbar-logout-error"
-                      role="alert"
-                    >
+                    <p className="navbar-logout-error" role="alert">
                       {logoutError}
                     </p>
                   )}
@@ -284,38 +226,39 @@ export default function Navbar({ toggleSidebar }) {
       </div>
 
       {/* PESQUISA */}
-      <div className="row navbar-search">
-        <select
-          className="genre-select"
-          value={genreFilter}
-          onChange={(event) =>
-            setGenreFilter(event.target.value)
-          }
-          aria-label="Filtrar por gênero"
-        >
-          <option value="">Todos</option>
 
-          {GENRE_ROWS?.map((genre) => (
-            <option key={genre} value={genre}>
-              {genre}
-            </option>
-          ))}
-        </select>
+      {/* PESQUISA GLOBAL DE FILMES */}
 
-        <div className="search-box">
-          <Search size={18} />
+      {showMovieSearch && (
+        <div className="row navbar-search">
+          <select
+            className="genre-select"
+            value={genreFilter}
+            onChange={(event) => setGenreFilter(event.target.value)}
+            aria-label="Filtrar por gênero"
+          >
+            <option value="">Todos</option>
 
-          <input
-            type="text"
-            placeholder="Buscar filmes..."
-            value={value}
-            onChange={(event) =>
-              setValue(event.target.value)
-            }
-            aria-label="Buscar filmes"
-          />
+            {GENRE_ROWS?.map((genre) => (
+              <option key={genre} value={genre}>
+                {genre}
+              </option>
+            ))}
+          </select>
+
+          <div className="search-box">
+            <Search size={18} />
+
+            <input
+              type="text"
+              placeholder="Buscar filmes..."
+              value={value}
+              onChange={(event) => setValue(event.target.value)}
+              aria-label="Buscar filmes"
+            />
+          </div>
         </div>
-      </div>
+      )}
     </header>
   );
 }

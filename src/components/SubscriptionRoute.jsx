@@ -1,12 +1,6 @@
-
 import { useEffect, useState } from "react";
 
-import {
-  Link,
-  Navigate,
-  Outlet,
-  useLocation,
-} from "react-router-dom";
+import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
 
 import { useAuth } from "../contexts/AuthContext";
 import { subscriptionApi } from "../services/api";
@@ -24,10 +18,7 @@ export default function SubscriptionRoute() {
 
   const isAdmin = user?.role === "admin";
 
-  const returnTo =
-    location.pathname +
-    location.search +
-    location.hash;
+  const returnTo = location.pathname + location.search + location.hash;
 
   // =========================================
   // CHECK SUBSCRIPTION
@@ -62,24 +53,13 @@ export default function SubscriptionRoute() {
 
         if (cancelled) return;
 
-        setStatus(
-          data.hasAccess === true
-            ? "allowed"
-            : "denied"
-        );
+        setStatus(data.hasAccess === true ? "allowed" : "denied");
       } catch (error) {
         if (cancelled) return;
 
-        console.error(
-          "[SUBSCRIPTION ROUTE]",
-          error
-        );
+        console.error("[SUBSCRIPTION ROUTE]", error);
 
-        setStatus(
-          error.response?.status === 401
-            ? "unauthorized"
-            : "error"
-        );
+        setStatus(error.response?.status === 401 ? "unauthorized" : "error");
       }
     }
 
@@ -126,17 +106,11 @@ export default function SubscriptionRoute() {
     return (
       <main className="subscription-guard">
         <div className="subscription-guard-card">
-          <div
-            className="subscription-guard-spinner"
-            aria-hidden="true"
-          />
+          <div className="subscription-guard-spinner" aria-hidden="true" />
 
           <h2>Verificando sua assinatura</h2>
 
-          <p>
-            Estamos verificando se seu acesso
-            ao MiqFlix está ativo.
-          </p>
+          <p>Estamos verificando se seu acesso ao MiqFlix está ativo.</p>
         </div>
       </main>
     );
@@ -150,33 +124,23 @@ export default function SubscriptionRoute() {
     return (
       <main className="subscription-guard">
         <div className="subscription-guard-card">
-          <div className="subscription-guard-icon error">
-            !
-          </div>
+          <div className="subscription-guard-icon error">!</div>
 
-          <h2>
-            Não foi possível verificar seu acesso
-          </h2>
+          <h2>Não foi possível verificar seu acesso</h2>
 
           <p>
-            O serviço de assinaturas está
-            temporariamente indisponível.
-            Tente novamente em alguns instantes.
+            O serviço de assinaturas está temporariamente indisponível. Tente
+            novamente em alguns instantes.
           </p>
 
           <button
             type="button"
-            onClick={() =>
-              setRetryKey((value) => value + 1)
-            }
+            onClick={() => setRetryKey((value) => value + 1)}
           >
             Tentar novamente
           </button>
 
-          <Link
-            to="/"
-            className="subscription-guard-link"
-          >
+          <Link to="/" className="subscription-guard-link">
             Voltar ao início
           </Link>
         </div>
@@ -191,9 +155,7 @@ export default function SubscriptionRoute() {
   if (status === "denied") {
     return (
       <Navigate
-        to={`/subscription?returnTo=${encodeURIComponent(
-          returnTo
-        )}`}
+        to={`/subscription?returnTo=${encodeURIComponent(returnTo)}`}
         replace
       />
     );

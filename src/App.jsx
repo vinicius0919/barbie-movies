@@ -1,9 +1,4 @@
-
-import {
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 
 import { AuthProvider } from "./contexts/AuthContext";
 
@@ -11,13 +6,20 @@ import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SubscriptionRoute from "./components/SubscriptionRoute";
 
+// Páginas principais
 import Home from "./pages/Home";
 import Player from "./pages/Player";
-import Admin from "./pages/Admin";
 import Favorites from "./pages/Favorites";
+
+// Séries
+import SeriesCatalog from "./pages/SeriesCatalog";
 import SeriesManager from "./pages/SeriesManager";
 import SeriesDetails from "./pages/SeriesDetails";
 
+// Administração
+import Admin from "./pages/Admin";
+
+// Autenticação e assinaturas
 import AuthPage from "./pages/AuthPage";
 import SubscriptionPage from "./pages/SubscriptionPage";
 import CheckoutReturn from "./pages/CheckoutReturn";
@@ -29,104 +31,63 @@ export default function App() {
     <AuthProvider>
       <Layout>
         <Routes>
+          {/* ================================
+              PÁGINAS PÚBLICAS
+          ================================= */}
 
-          {/* PÁGINAS PÚBLICAS */}
+          <Route path="/" element={<Home />} />
 
-          <Route
-            path="/"
-            element={<Home />}
-          />
+          <Route path="/login" element={<AuthPage mode="login" />} />
 
-          <Route
-            path="/login"
-            element={<AuthPage mode="login" />}
-          />
+          <Route path="/register" element={<AuthPage mode="register" />} />
 
-          <Route
-            path="/register"
-            element={<AuthPage mode="register" />}
-          />
+          <Route path="/subscription" element={<SubscriptionPage />} />
 
-          <Route
-            path="/subscription"
-            element={<SubscriptionPage />}
-          />
-
-          {/* ROTAS AUTENTICADAS */}
+          <Route path="/series" element={<SeriesCatalog />} />
+          {/* ================================
+              ROTAS AUTENTICADAS
+          ================================= */}
 
           <Route element={<ProtectedRoute />}>
+            <Route path="/checkout/retorno" element={<CheckoutReturn />} />
 
-            <Route
-              path="/checkout/retorno"
-              element={<CheckoutReturn />}
-            />
+            <Route path="/favorites" element={<Favorites />} />
 
-            <Route
-              path="/favorites"
-              element={<Favorites />}
-            />
-
-            {/* CONTEÚDO PARA ASSINANTES */}
+            {/* ================================
+                CONTEÚDO PARA ASSINANTES
+            ================================= */}
 
             <Route element={<SubscriptionRoute />}>
+              <Route path="/movie/:id" element={<Player />} />
 
-              <Route
-                path="/movie/:id"
-                element={<Player />}
-              />
 
-              <Route
-                path="/series/:id"
-                element={<SeriesDetails />}
-              />
-
+              <Route path="/series/:id" element={<SeriesDetails />} />
             </Route>
 
-            {/* ADMINISTRAÇÃO */}
+            {/* ================================
+                ADMINISTRAÇÃO
+            ================================= */}
 
-            <Route
-              element={
-                <ProtectedRoute adminOnly />
-              }
-            >
+            <Route element={<ProtectedRoute adminOnly />}>
+              <Route path="/admin" element={<Admin />} />
 
-              <Route
-                path="/admin"
-                element={<Admin />}
-              />
-
-              <Route
-                path="/admin/series"
-                element={<SeriesManager />}
-              />
-
-              {/* COMPATIBILIDADE COM ROTA ANTIGA */}
-
-              <Route
-                path="/series"
-                element={
-                  <Navigate
-                    to="/admin/series"
-                    replace
-                  />
-                }
-              />
-
+              <Route path="/admin/series" element={<SeriesManager />} />
             </Route>
-
           </Route>
 
-          {/* PÁGINA NÃO ENCONTRADA */}
+          {/* ================================
+              PÁGINA NÃO ENCONTRADA
+          ================================= */}
 
           <Route
             path="*"
             element={
               <div className="not-found-page">
                 <h1>Página não encontrada</h1>
+                <p>O endereço solicitado não existe.</p>
               </div>
             }
           />
-
         </Routes>
       </Layout>
     </AuthProvider>

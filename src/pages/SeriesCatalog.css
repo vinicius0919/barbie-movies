@@ -1,0 +1,245 @@
+
+.series-catalog {
+  min-height: 100vh;
+  background: #0b0b0f;
+  color: #f5f5f7;
+}
+
+.series-catalog-hero {
+  min-height: 440px;
+  display: flex;
+  align-items: center;
+  background-size: cover;
+  background-position: center;
+}
+
+.series-catalog-hero-content {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  padding: 70px 32px;
+}
+
+.series-catalog-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #ff355c;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.series-catalog-hero h1 {
+  max-width: 650px;
+  margin: 18px 0;
+  font-size: clamp(36px, 5vw, 64px);
+  line-height: 1.08;
+}
+
+.series-catalog-hero-meta {
+  display: flex;
+  gap: 18px;
+  color: #d1d1d8;
+  font-size: 14px;
+}
+
+.series-catalog-hero-content p {
+  max-width: 550px;
+  margin: 20px 0 28px;
+  color: #e0e0e5;
+  line-height: 1.7;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.series-catalog-hero-content button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 24px;
+  border: none;
+  border-radius: 8px;
+  background: #fff;
+  color: #111;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .2s, background .2s;
+}
+
+.series-catalog-hero-content button:hover {
+  background: #e9e9e9;
+  transform: translateY(-2px);
+}
+
+.series-catalog-container {
+  max-width: 1260px;
+  margin: 0 auto;
+  padding: 42px 30px 80px;
+}
+
+.series-catalog-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-bottom: 30px;
+}
+
+.series-catalog-label {
+  color: #ff355c;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.series-catalog-header h2 {
+  margin: 8px 0;
+  font-size: clamp(26px, 3vw, 36px);
+}
+
+.series-catalog-header p {
+  margin: 0;
+  color: #a8a8b3;
+  font-size: 14px;
+}
+
+.series-catalog-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(340px, 100%);
+  padding: 12px 15px;
+  border: 1px solid #30303b;
+  border-radius: 10px;
+  background: #18181f;
+  color: #9d9da9;
+}
+
+.series-catalog-search:focus-within {
+  border-color: #ff355c;
+}
+
+.series-catalog-search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+}
+
+.series-catalog-genres {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  margin-bottom: 30px;
+  scrollbar-width: thin;
+}
+
+.series-catalog-genres button {
+  flex-shrink: 0;
+  padding: 10px 18px;
+  border: 1px solid #30303b;
+  border-radius: 999px;
+  background: #19191f;
+  color: #ccc;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.series-catalog-genres button:hover,
+.series-catalog-genres button.active {
+  background: #ff003c;
+  border-color: #ff003c;
+  color: white;
+}
+
+.series-catalog-results {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.series-catalog-results h3 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.series-catalog-results span {
+  color: #9999a5;
+  font-size: 13px;
+}
+
+.series-catalog-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fill, minmax(205px, 1fr));
+  gap: 26px 20px;
+}
+
+.series-catalog-feedback {
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #aaaab5;
+  text-align: center;
+}
+
+.series-catalog-spin {
+  animation: catalog-spin 1s linear infinite;
+}
+
+@keyframes catalog-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .series-catalog-hero {
+    min-height: 360px;
+    background-position: center;
+  }
+
+  .series-catalog-hero-content {
+    padding: 55px 22px;
+  }
+
+  .series-catalog-container {
+    padding: 32px 18px 60px;
+  }
+
+  .series-catalog-header {
+    align-items: stretch;
+  }
+
+  .series-catalog-search {
+    width: 100%;
+  }
+
+  .series-catalog-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+    gap: 20px 12px;
+  }
+}
+
+@media (max-width: 420px) {
+  .series-catalog-grid {
+    gap: 16px 10px;
+  }
+
+  .series-catalog-hero h1 {
+    font-size: 34px;
+  }
+}

@@ -79,7 +79,6 @@ export default function Sidebar({
         </div>
 
         <nav aria-label="Navegação principal">
-
           <NavLink
             to="/"
             end
@@ -90,6 +89,19 @@ export default function Sidebar({
             <span>Início</span>
           </NavLink>
 
+          {/* CATÁLOGO DE SÉRIES */}
+
+          <NavLink
+            to="/series"
+            className={getLinkClass}
+            onClick={closeSidebar}
+          >
+            <Tv size={20} />
+            <span>Séries</span>
+          </NavLink>
+
+          {/* LISTA PESSOAL */}
+
           <NavLink
             to="/favorites"
             className={getLinkClass}
@@ -98,6 +110,8 @@ export default function Sidebar({
             <Heart size={20} />
             <span>Minha Lista</span>
           </NavLink>
+
+          {/* ADMINISTRAÇÃO */}
 
           {isAdmin && (
             <>
@@ -122,7 +136,6 @@ export default function Sidebar({
               </NavLink>
             </>
           )}
-
         </nav>
       </aside>
     </>

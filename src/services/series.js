@@ -2,10 +2,14 @@
 import api from "./api";
 
 // =========================================
-// HELPERS
+// CONFIGURATION
 // =========================================
 
 const BASE_URL = "/series";
+
+// =========================================
+// URL HELPERS
+// =========================================
 
 const seriesUrl = (seriesId) =>
   `${BASE_URL}/${encodeURIComponent(seriesId)}`;
@@ -25,9 +29,64 @@ const episodeUrl = (
   )}`;
 
 // =========================================
+// DATA HELPERS
+// =========================================
+
+// Somente os campos aceitos pelo controller
+// para criar ou atualizar os metadados.
+const SERIES_FIELDS = [
+  "tmdbId",
+  "title",
+  "overview",
+  "poster",
+  "backdrop",
+  "year",
+  "genres",
+  "status",
+  "published",
+];
+
+const pickFields = (data, fields) => {
+  const result = {};
+
+  for (const field of fields) {
+    if (data?.[field] !== undefined) {
+      result[field] = data[field];
+    }
+  }
+
+  return result;
+};
+
+export const normalizeSeriesMetadata = (data) => {
+  const metadata = pickFields(data, SERIES_FIELDS);
+
+  if (typeof metadata.title === "string") {
+    metadata.title = metadata.title.trim();
+  }
+
+  if (metadata.published !== undefined) {
+    metadata.published = metadata.published === true;
+  }
+
+  if (metadata.tmdbId === "") {
+    delete metadata.tmdbId;
+  }
+
+  if (metadata.year === "") {
+    delete metadata.year;
+  }
+
+  return metadata;
+};
+
+// =========================================
 // SERIES - READ
 // =========================================
 
+// Listagem administrativa.
+// O backend deve restringir este endpoint
+// aos administradores.
 export async function getSeries(params = {}) {
   const response = await api.get(BASE_URL, {
     params,
@@ -36,6 +95,17 @@ export async function getSeries(params = {}) {
   return response.data;
 }
 
+// Catálogo de séries publicadas.
+export async function getSeriesCatalog(params = {}) {
+  const response = await api.get(
+    `${BASE_URL}/catalog`,
+    { params }
+  );
+
+  return response.data;
+}
+
+// Séries exibidas na Home.
 export async function getHomeSeries() {
   const response = await api.get(
     `${BASE_URL}/home`
@@ -44,6 +114,9 @@ export async function getHomeSeries() {
   return response.data;
 }
 
+// Detalhes de uma série.
+// Para edição, o backend deve retornar
+// o documento completo ao administrador.
 export async function getSeriesById(id) {
   const response = await api.get(
     seriesUrl(id)
@@ -59,7 +132,7 @@ export async function getSeriesById(id) {
 export async function createSeries(data) {
   const response = await api.post(
     BASE_URL,
-    data
+    normalizeSeriesMetadata(data)
   );
 
   return response.data;
@@ -68,7 +141,7 @@ export async function createSeries(data) {
 export async function updateSeries(id, data) {
   const response = await api.put(
     seriesUrl(id),
-    data
+    normalizeSeriesMetadata(data)
   );
 
   return response.data;
@@ -94,7 +167,7 @@ export async function addSeason(
   const response = await api.post(
     `${seriesUrl(seriesId)}/seasons`,
     {
-      seasonNumber,
+      seasonNumber: Number(seasonNumber),
       title,
     }
   );
@@ -109,7 +182,9 @@ export async function updateSeason(
 ) {
   const response = await api.put(
     seasonUrl(seriesId, seasonNumber),
-    data
+    {
+      title: data.title,
+    }
   );
 
   return response.data;
@@ -136,6 +211,46 @@ export async function deleteSeason(
 // EPISODES
 // =========================================
 
+const EPISODE_FIELDS = [
+  "episodeNumber",
+  "title",
+  "overview",
+  "duration",
+  "still",
+  "videoUrl",
+  "sources",
+];
+
+export const normalizeEpisode = (data) => {
+  const episode = pickFields(
+    data,
+    EPISODE_FIELDS
+  );
+
+  if (episode.episodeNumber !== undefined) {
+    episode.episodeNumber = Number(
+      episode.episodeNumber
+    );
+  }
+
+  if (
+    episode.duration === "" ||
+    episode.duration === null
+  ) {
+    episode.duration = 0;
+  } else if (episode.duration !== undefined) {
+    episode.duration = Number(
+      episode.duration
+    );
+  }
+
+  if (typeof episode.title === "string") {
+    episode.title = episode.title.trim();
+  }
+
+  return episode;
+};
+
 export async function addEpisode(
   seriesId,
   seasonNumber,
@@ -144,8 +259,8 @@ export async function addEpisode(
   const response = await api.post(
     `${seriesUrl(seriesId)}/episodes`,
     {
-      seasonNumber,
-      episode,
+      seasonNumber: Number(seasonNumber),
+      episode: normalizeEpisode(episode),
     }
   );
 
@@ -158,13 +273,19 @@ export async function updateEpisode(
   episodeNumber,
   data
 ) {
+  const payload = normalizeEpisode(data);
+
+  // O número identifica o episódio na URL.
+  // O controller atual não permite renumerá-lo.
+  delete payload.episodeNumber;
+
   const response = await api.put(
     episodeUrl(
       seriesId,
       seasonNumber,
       episodeNumber
     ),
-    data
+    payload
   );
 
   return response.data;
