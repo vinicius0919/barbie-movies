@@ -7,200 +7,234 @@ import {
 } from "react";
 
 const STALL_TIMEOUT_MS = 20000;
-const CHECK_INTERVAL_MS = 5000;
+const CHECK_INTERVAL_MS = 2000;
 const MAX_RETRIES = 3;
+const STABLE_PLAYBACK_MS = 60000;
+
+function createRecoveryState() {
+  return {
+    attempts: 0,
+    recovering: false,
+    wantsPlayback: false,
+    ended: false,
+    waitingSince: null,
+    lastProgressAt: Date.now(),
+    lastPosition: 0,
+    pendingSeek: null,
+    recoveryStartedAt: 0,
+    stableSince: null,
+    sourceGeneration: 0,
+  };
+}
 
 export default function useStreamRecovery({
   videoRef,
   sourceUrl,
 }) {
-  const [retryToken, setRetryToken] =
-    useState(0);
+  const [retryToken, setRetryToken] = useState(0);
 
-  const [recoveryState, setRecoveryState] =
-    useState({
-      recovering: false,
-      attempts: 0,
-      error: "",
-    });
+  const stateRef = useRef(createRecoveryState());
+  const sourceRef = useRef(sourceUrl);
 
-  const lastProgressAt = useRef(Date.now());
-  const lastPosition = useRef(0);
-  const pendingSeek = useRef(null);
-  const shouldResume = useRef(false);
-  const attemptsRef = useRef(0);
-  const recoveringRef = useRef(false);
-  const waitingSince = useRef(null);
-  const endedRef = useRef(false);
-  const mountedRef = useRef(true);
+  // Mantém o estado vinculado à fonte atual.
+  if (sourceRef.current !== sourceUrl) {
+    sourceRef.current = sourceUrl;
+    stateRef.current = createRecoveryState();
+  }
 
-  const resetRecovery = useCallback(() => {
-    attemptsRef.current = 0;
-    recoveringRef.current = false;
-    waitingSince.current = null;
-
-    setRecoveryState({
-      recovering: false,
-      attempts: 0,
-      error: "",
-    });
+  const isRecovering = useCallback(() => {
+    return stateRef.current.recovering;
   }, []);
 
   const recover = useCallback(() => {
     const video = videoRef.current;
+    const state = stateRef.current;
 
     if (
       !video ||
       !sourceUrl ||
-      recoveringRef.current ||
-      endedRef.current ||
-      video.ended
+      state.ended ||
+      video.ended ||
+      state.attempts >= MAX_RETRIES
     ) {
       return;
     }
 
-    if (attemptsRef.current >= MAX_RETRIES) {
-      setRecoveryState({
-        recovering: false,
-        attempts: attemptsRef.current,
-        error:
-          "Não foi possível restabelecer a transmissão. Tente novamente.",
-      });
+    const now = Date.now();
 
+    if (
+      state.recovering &&
+      now - state.recoveryStartedAt <
+        STALL_TIMEOUT_MS
+    ) {
       return;
     }
 
-    attemptsRef.current += 1;
-    recoveringRef.current = true;
+    state.attempts += 1;
+    state.recovering = true;
+
+    state.wantsPlayback =
+      state.wantsPlayback || !video.paused;
 
     const position = Number.isFinite(
       video.currentTime
     )
       ? video.currentTime
-      : lastPosition.current;
+      : state.lastPosition;
 
-    pendingSeek.current = Math.max(
+    state.pendingSeek = Math.max(
       0,
       position - 0.5
     );
 
-    shouldResume.current = !video.paused;
+    state.recoveryStartedAt = now;
+    state.lastProgressAt = now;
+    state.waitingSince = null;
+    state.stableSince = null;
+    state.sourceGeneration += 1;
 
     console.warn(
-      "[MiqFlix] Reconectando streaming",
+      "[MiqFlix] Reconexão interna",
       {
-        attempt: attemptsRef.current,
-        position: pendingSeek.current,
+        attempt: state.attempts,
+        position: state.pendingSeek,
       }
     );
 
-    setRecoveryState({
-      recovering: true,
-      attempts: attemptsRef.current,
-      error: "",
-    });
-
-    lastProgressAt.current = Date.now();
-    waitingSince.current = null;
-
-    // Gera uma nova URL para forçar uma
-    // nova requisição HTTP ao backend.
-    setRetryToken((current) => current + 1);
+    setRetryToken(
+      state.sourceGeneration
+    );
   }, [videoRef, sourceUrl]);
 
   const handleTimeUpdate = useCallback(
     (event) => {
       const video = event.currentTarget;
-      const current = video.currentTime;
+      const state = stateRef.current;
 
-      if (!Number.isFinite(current)) return;
+      const position = video.currentTime;
+
+      if (!Number.isFinite(position)) {
+        return;
+      }
+
+      const advanced =
+        position > state.lastPosition + 0.1;
+
+      if (!advanced) return;
+
+      state.lastPosition = position;
+      state.lastProgressAt = Date.now();
+      state.waitingSince = null;
+
+      if (state.recovering) {
+        state.recovering = false;
+        state.recoveryStartedAt = 0;
+        state.stableSince = Date.now();
+      }
 
       if (
-        Math.abs(
-          current - lastPosition.current
-        ) >= 0.1
+        !video.paused &&
+        state.stableSince === null
       ) {
-        lastPosition.current = current;
-        lastProgressAt.current = Date.now();
-        waitingSince.current = null;
+        state.stableSince = Date.now();
+      }
 
-        if (recoveringRef.current) {
-          recoveringRef.current = false;
-
-          setRecoveryState((previous) => ({
-            ...previous,
-            recovering: false,
-            error: "",
-          }));
-        }
+      if (
+        state.stableSince !== null &&
+        !video.paused &&
+        Date.now() - state.stableSince >=
+          STABLE_PLAYBACK_MS
+      ) {
+        state.attempts = 0;
+        state.stableSince = Date.now();
       }
     },
     []
   );
 
   const handleWaiting = useCallback(() => {
-    if (!waitingSince.current) {
-      waitingSince.current = Date.now();
-    }
+    const state = stateRef.current;
 
-    console.warn(
-      "[MiqFlix] Aguardando buffer"
-    );
+    if (state.waitingSince === null) {
+      state.waitingSince = Date.now();
+    }
   }, []);
 
-  const handleStalled = useCallback(() => {
-    if (!waitingSince.current) {
-      waitingSince.current = Date.now();
-    }
-
-    console.warn(
-      "[MiqFlix] Stream sem progresso"
-    );
-  }, []);
+  const handleStalled = handleWaiting;
 
   const handlePlaying = useCallback(() => {
-    waitingSince.current = null;
-    lastProgressAt.current = Date.now();
-    recoveringRef.current = false;
+    const state = stateRef.current;
 
-    setRecoveryState((previous) => ({
-      ...previous,
-      recovering: false,
-      error: "",
-    }));
+    state.wantsPlayback = true;
+    state.waitingSince = null;
+    state.lastProgressAt = Date.now();
+
+    if (state.stableSince === null) {
+      state.stableSince = Date.now();
+    }
   }, []);
+
+  const handlePause = useCallback(() => {
+    const state = stateRef.current;
+
+    if (!state.recovering) {
+      state.wantsPlayback = false;
+      state.waitingSince = null;
+    }
+  }, []);
+
+  const handleSeeking = useCallback(() => {
+    const state = stateRef.current;
+
+    state.waitingSince = null;
+    state.lastProgressAt = Date.now();
+  }, []);
+
+  const handleSeeked = useCallback(
+    (event) => {
+      const state = stateRef.current;
+
+      state.lastPosition =
+        event.currentTarget.currentTime;
+
+      state.lastProgressAt = Date.now();
+      state.waitingSince = null;
+    },
+    []
+  );
 
   const handleLoadedMetadata = useCallback(
     (event) => {
       const video = event.currentTarget;
+      const state = stateRef.current;
 
-      if (pendingSeek.current == null) {
+      if (state.pendingSeek === null) {
         return;
       }
 
-      const duration = video.duration;
-      let position = pendingSeek.current;
+      let position = state.pendingSeek;
 
       if (
-        Number.isFinite(duration) &&
-        duration > 1
+        Number.isFinite(video.duration) &&
+        video.duration > 1
       ) {
         position = Math.min(
           position,
-          duration - 0.5
+          video.duration - 0.5
         );
       }
 
       try {
         video.currentTime = position;
+        state.lastPosition = position;
       } catch (error) {
         console.warn(
-          "[MiqFlix] Não foi possível restaurar a posição",
+          "[MiqFlix] Falha ao restaurar posição",
           error
         );
       }
 
-      pendingSeek.current = null;
+      state.pendingSeek = null;
     },
     []
   );
@@ -208,20 +242,22 @@ export default function useStreamRecovery({
   const handleCanPlay = useCallback(
     async (event) => {
       const video = event.currentTarget;
+      const state = stateRef.current;
 
-      if (!recoveringRef.current) return;
+      if (
+        !state.recovering ||
+        !state.wantsPlayback
+      ) {
+        return;
+      }
 
-      if (shouldResume.current) {
-        shouldResume.current = false;
-
-        try {
-          await video.play();
-        } catch (error) {
-          console.warn(
-            "[MiqFlix] Reprodução automática bloqueada",
-            error
-          );
-        }
+      try {
+        await video.play();
+      } catch (error) {
+        console.warn(
+          "[MiqFlix] Reprodução automática indisponível",
+          error
+        );
       }
     },
     []
@@ -240,104 +276,73 @@ export default function useStreamRecovery({
         }
       );
 
-      // Um erro fatal pode ocorrer sem stalled.
-      // A recuperação usa o mesmo limite
-      // de tentativas.
-      recoveringRef.current = false;
       recover();
     },
     [recover]
   );
 
   const handleEnded = useCallback(() => {
-    endedRef.current = true;
-    resetRecovery();
-  }, [resetRecovery]);
+    const state = stateRef.current;
 
-  const retryManually = useCallback(() => {
-    attemptsRef.current = 0;
-    recoveringRef.current = false;
-    endedRef.current = false;
-    recover();
-  }, [recover]);
-
-  useEffect(() => {
-    mountedRef.current = true;
-
-    return () => {
-      mountedRef.current = false;
-    };
+    state.ended = true;
+    state.recovering = false;
+    state.wantsPlayback = false;
+    state.pendingSeek = null;
   }, []);
 
-
-useEffect(() => {
-  if (!sourceUrl) return;
-
-  const interval = setInterval(() => {
-    if (!mountedRef.current) return;
-
-    const video = videoRef.current;
-
-    if (
-      !video ||
-      video.ended ||
-      video.seeking ||
-      endedRef.current
-    ) {
-      return;
-    }
-
-    const now = Date.now();
-
-    if (recoveringRef.current) {
-      if (
-        now - lastProgressAt.current >=
-        STALL_TIMEOUT_MS
-      ) {
-        // A tentativa atual não produziu
-        // progresso dentro do prazo.
-        recoveringRef.current = false;
-        recover();
-      }
-
-      return;
-    }
-
-    if (video.paused) return;
-
-    const stalledFor = waitingSince.current
-      ? now - waitingSince.current
-      : now - lastProgressAt.current;
-
-    if (stalledFor >= STALL_TIMEOUT_MS) {
-      recover();
-    }
-  }, CHECK_INTERVAL_MS);
-
-  return () => clearInterval(interval);
-}, [videoRef, sourceUrl, recover]);
-
-
   useEffect(() => {
-    attemptsRef.current = 0;
-    recoveringRef.current = false;
-    endedRef.current = false;
-    pendingSeek.current = null;
-    shouldResume.current = false;
-    lastPosition.current = 0;
-    lastProgressAt.current = Date.now();
-    waitingSince.current = null;
-
     setRetryToken(0);
-
-    setRecoveryState({
-      recovering: false,
-      attempts: 0,
-      error: "",
-    });
   }, [sourceUrl]);
 
-  
+  useEffect(() => {
+    if (!sourceUrl) return;
+
+    const interval = setInterval(() => {
+      const video = videoRef.current;
+      const state = stateRef.current;
+
+      if (
+        !video ||
+        state.ended ||
+        video.ended ||
+        video.seeking
+      ) {
+        return;
+      }
+
+      const now = Date.now();
+
+      if (state.recovering) {
+        if (
+          now - state.recoveryStartedAt >=
+          STALL_TIMEOUT_MS
+        ) {
+          recover();
+        }
+
+        return;
+      }
+
+      // Não reconectar quando o usuário
+      // pausou intencionalmente.
+      if (video.paused) return;
+
+      const referenceTime =
+        state.waitingSince ??
+        state.lastProgressAt;
+
+      if (
+        now - referenceTime >=
+        STALL_TIMEOUT_MS
+      ) {
+        recover();
+      }
+    }, CHECK_INTERVAL_MS);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [videoRef, sourceUrl, recover]);
 
   const streamUrl = sourceUrl
     ? `${sourceUrl}${
@@ -347,13 +352,14 @@ useEffect(() => {
 
   return {
     streamUrl,
-    recoveryState,
-    resetRecovery,
-    retryManually,
+    isRecovering,
     handleTimeUpdate,
     handleWaiting,
     handleStalled,
     handlePlaying,
+    handlePause,
+    handleSeeking,
+    handleSeeked,
     handleLoadedMetadata,
     handleCanPlay,
     handleError,

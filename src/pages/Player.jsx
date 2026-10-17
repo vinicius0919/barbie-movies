@@ -15,12 +15,10 @@ import {
 } from "react-router-dom";
 
 import {
-  AlertCircle,
   ArrowLeft,
   Clock3,
   Heart,
   Play,
-  RefreshCw,
   Star,
   Volume2,
   Eye,
@@ -33,6 +31,10 @@ import {
 } from "../services/movies";
 
 import useStreamRecovery from "../hooks/useStreamRecovery";
+
+// =========================================
+// HELPERS
+// =========================================
 
 const isYoutube = (movie) =>
   movie?.provider === "youtube";
@@ -67,7 +69,14 @@ const formatViews = (views = 0) => {
   return views;
 };
 
-function YoutubePlayer({ movie, iframeRef }) {
+// =========================================
+// YOUTUBE PLAYER
+// =========================================
+
+function YoutubePlayer({
+  movie,
+  iframeRef,
+}) {
   return (
     <div className="video-shell youtube-shell">
       <iframe
@@ -82,6 +91,10 @@ function YoutubePlayer({ movie, iframeRef }) {
   );
 }
 
+// =========================================
+// PLAYER
+// =========================================
+
 export default function Player() {
   const { id } = useParams();
 
@@ -89,10 +102,8 @@ export default function Player() {
   const [favorite, setFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] =
     useState(false);
-  const [isLoading, setIsLoading] =
-    useState(true);
-  const [loadError, setLoadError] =
-    useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
 
@@ -100,22 +111,30 @@ export default function Player() {
   const iframeRef = useRef(null);
 
   const hasCountedView = useRef(false);
+  const viewInFlightRef = useRef(false);
   const watchedSecondsRef = useRef(0);
   const lastWatchPositionRef = useRef(null);
   const lastSavedAtRef = useRef(0);
+
   const resumePositionRef = useRef(0);
   const initialSeekDoneRef = useRef(false);
-  const viewInFlightRef = useRef(false);
+  const completedRef = useRef(false);
 
   const storageKey = `movie-progress-${id}`;
   const viewStorageKey = `movie-view-${id}`;
+
+  // =========================================
+  // STREAM URL
+  // =========================================
 
   const sourceUrl = useMemo(() => {
     if (!movie || isYoutube(movie)) {
       return "";
     }
 
-    if (!movie.videoUrl) return "";
+    if (!movie.videoUrl) {
+      return "";
+    }
 
     const baseUrl =
       import.meta.env.VITE_API_URL?.replace(
@@ -131,17 +150,21 @@ export default function Player() {
     );
   }, [movie?.videoUrl, movie?.provider]);
 
+  // =========================================
+  // SILENT STREAM RECOVERY
+  // =========================================
+
   const {
     streamUrl,
-    recoveryState,
-    resetRecovery,
-    retryManually,
+    isRecovering,
     handleTimeUpdate: trackStreamProgress,
     handleWaiting,
     handleStalled,
     handlePlaying,
-    handleLoadedMetadata:
-      restoreStreamMetadata,
+    handlePause: trackStreamPause,
+    handleSeeking: trackStreamSeeking,
+    handleSeeked: trackStreamSeeked,
+    handleLoadedMetadata: restoreStreamMetadata,
     handleCanPlay,
     handleError,
     handleEnded: finishRecovery,
@@ -150,9 +173,9 @@ export default function Player() {
     sourceUrl,
   });
 
-  // =========================
-  // CARREGAR FILME
-  // =========================
+  // =========================================
+  // LOAD MOVIE
+  // =========================================
 
   useEffect(() => {
     let cancelled = false;
@@ -166,11 +189,12 @@ export default function Player() {
         setProgress(0);
 
         hasCountedView.current = false;
+        viewInFlightRef.current = false;
         watchedSecondsRef.current = 0;
         lastWatchPositionRef.current = null;
         lastSavedAtRef.current = 0;
         initialSeekDoneRef.current = false;
-        viewInFlightRef.current = false;
+        completedRef.current = false;
 
         const data = await getMovie(id);
 
@@ -208,9 +232,9 @@ export default function Player() {
     };
   }, [id]);
 
-  // =========================
-  // RESTAURAR PROGRESSO
-  // =========================
+  // =========================================
+  // RESTORE SAVED PROGRESS
+  // =========================================
 
   useEffect(() => {
     resumePositionRef.current = 0;
@@ -224,29 +248,28 @@ export default function Player() {
 
       const parsed = JSON.parse(saved);
 
-      const currentTime = Number(
+      const savedTime = Number(
         parsed.currentTime
       );
 
-      const percentage = Number(
+      const savedPercentage = Number(
         parsed.percentage
       );
 
       if (
-        Number.isFinite(currentTime) &&
-        currentTime >= 0
+        Number.isFinite(savedTime) &&
+        savedTime >= 0
       ) {
-        resumePositionRef.current =
-          currentTime;
+        resumePositionRef.current = savedTime;
       }
 
       if (
-        Number.isFinite(percentage)
+        Number.isFinite(savedPercentage)
       ) {
         setProgress(
           Math.min(
             100,
-            Math.max(0, percentage)
+            Math.max(0, savedPercentage)
           )
         );
       }
@@ -258,15 +281,17 @@ export default function Player() {
     }
   }, [storageKey]);
 
-  // =========================
-  // SALVAR PROGRESSO
-  // =========================
+  // =========================================
+  // SAVE PROGRESS
+  // =========================================
 
   const saveProgress = useCallback(
     (video, force = false) => {
       if (
         !video ||
         video.ended ||
+        completedRef.current ||
+        isRecovering() ||
         !Number.isFinite(video.currentTime)
       ) {
         return;
@@ -292,12 +317,12 @@ export default function Player() {
         videoDuration > 0
           ? Math.min(
               100,
-              (currentTime / videoDuration) *
-                100
+              (currentTime / videoDuration) * 100
             )
           : 0;
 
       lastSavedAtRef.current = now;
+
       setProgress(percentage);
 
       try {
@@ -312,17 +337,17 @@ export default function Player() {
         );
       } catch (error) {
         console.warn(
-          "[MiqFlix] Falha ao salvar progresso",
+          "[MiqFlix] Erro ao salvar progresso",
           error
         );
       }
     },
-    [storageKey]
+    [storageKey, isRecovering]
   );
 
-  // =========================
-  // REGISTRAR VISUALIZAÇÃO
-  // =========================
+  // =========================================
+  // COUNT VIEW
+  // =========================================
 
   const registerView = useCallback(
     async () => {
@@ -347,8 +372,7 @@ export default function Player() {
 
         if (
           savedView &&
-          Date.now() - savedView <
-            twelveHours
+          Date.now() - savedView < twelveHours
         ) {
           hasCountedView.current = true;
           return;
@@ -386,22 +410,17 @@ export default function Player() {
     [movie?._id, viewStorageKey]
   );
 
-  // =========================
-  // EVENTOS DO PLAYER
-  // =========================
+  // =========================================
+  // VIDEO METADATA
+  // =========================================
 
   const handleLoadedMetadata = (event) => {
     const video = event.currentTarget;
 
-    if (
-      Number.isFinite(video.duration)
-    ) {
+    if (Number.isFinite(video.duration)) {
       setDuration(video.duration);
     }
 
-    // A retomada inicial é aplicada apenas
-    // uma vez. Reconexões são gerenciadas
-    // pelo hook.
     if (!initialSeekDoneRef.current) {
       initialSeekDoneRef.current = true;
 
@@ -411,10 +430,7 @@ export default function Player() {
       if (savedTime > 0) {
         const limit =
           Number.isFinite(video.duration)
-            ? Math.max(
-                0,
-                video.duration - 1
-              )
+            ? Math.max(0, video.duration - 1)
             : savedTime;
 
         try {
@@ -424,7 +440,7 @@ export default function Player() {
           );
         } catch (error) {
           console.warn(
-            "[MiqFlix] Falha ao retomar filme",
+            "[MiqFlix] Falha ao restaurar progresso",
             error
           );
         }
@@ -434,11 +450,18 @@ export default function Player() {
     restoreStreamMetadata(event);
   };
 
+  // =========================================
+  // TIME UPDATE
+  // =========================================
+
   const handleVideoTimeUpdate = (event) => {
     const video = event.currentTarget;
 
     trackStreamProgress(event);
-    saveProgress(video);
+
+    if (!isRecovering()) {
+      saveProgress(video);
+    }
 
     const current = video.currentTime;
     const previous =
@@ -451,8 +474,7 @@ export default function Player() {
     ) {
       const delta = current - previous;
 
-      // Não contabiliza saltos grandes
-      // provocados por seek.
+      // Evita contar grandes saltos de tempo.
       if (delta > 0 && delta <= 2) {
         watchedSecondsRef.current += delta;
       }
@@ -467,18 +489,44 @@ export default function Player() {
     }
   };
 
-  const handleVideoSeeking = () => {
+  // =========================================
+  // VIDEO SEEKING
+  // =========================================
+
+  const handleVideoSeeking = (event) => {
     lastWatchPositionRef.current = null;
+    trackStreamSeeking(event);
   };
 
+  const handleVideoSeeked = (event) => {
+    lastWatchPositionRef.current =
+      event.currentTarget.currentTime;
+
+    trackStreamSeeked(event);
+  };
+
+  // =========================================
+  // VIDEO PAUSE
+  // =========================================
+
   const handleVideoPause = (event) => {
+    trackStreamPause(event);
+
+    if (isRecovering()) return;
+
     saveProgress(
       event.currentTarget,
       true
     );
   };
 
+  // =========================================
+  // VIDEO ENDED
+  // =========================================
+
   const handleVideoEnded = () => {
+    completedRef.current = true;
+
     finishRecovery();
 
     localStorage.removeItem(storageKey);
@@ -487,9 +535,9 @@ export default function Player() {
     setProgress(100);
   };
 
-  // =========================
-  // FAVORITOS
-  // =========================
+  // =========================================
+  // FAVORITE
+  // =========================================
 
   async function handleFavorite(event) {
     event.preventDefault();
@@ -516,9 +564,9 @@ export default function Player() {
     }
   }
 
-  // =========================
-  // ASSISTIR AGORA
-  // =========================
+  // =========================================
+  // WATCH NOW
+  // =========================================
 
   async function handleWatchNow() {
     if (isYoutube(movie)) {
@@ -560,15 +608,15 @@ export default function Player() {
       }
     } catch (error) {
       console.error(
-        "[MiqFlix] Falha ao iniciar reprodução",
+        "[MiqFlix] Erro ao iniciar vídeo",
         error
       );
     }
   }
 
-  // =========================
+  // =========================================
   // RENDER
-  // =========================
+  // =========================================
 
   if (isLoading) {
     return (
@@ -634,50 +682,28 @@ export default function Player() {
                 onSeeking={
                   handleVideoSeeking
                 }
-                onPause={handleVideoPause}
-                onWaiting={handleWaiting}
-                onStalled={handleStalled}
-                onPlaying={handlePlaying}
-                onError={handleError}
-                onEnded={handleVideoEnded}
+                onSeeked={
+                  handleVideoSeeked
+                }
+                onPause={
+                  handleVideoPause
+                }
+                onWaiting={
+                  handleWaiting
+                }
+                onStalled={
+                  handleStalled
+                }
+                onPlaying={
+                  handlePlaying
+                }
+                onError={
+                  handleError
+                }
+                onEnded={
+                  handleVideoEnded
+                }
               />
-
-              {recoveryState.recovering && (
-                <div
-                  className="stream-recovery-status"
-                  role="status"
-                >
-                  <RefreshCw
-                    size={18}
-                    className="spin"
-                  />
-                  Restabelecendo conexão...
-                  Tentativa{" "}
-                  {recoveryState.attempts}
-                  /3
-                </div>
-              )}
-
-              {recoveryState.error && (
-                <div
-                  className="stream-recovery-error"
-                  role="alert"
-                >
-                  <AlertCircle size={18} />
-
-                  <span>
-                    {recoveryState.error}
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={retryManually}
-                  >
-                    <RefreshCw size={16} />
-                    Tentar novamente
-                  </button>
-                </div>
-              )}
             </div>
           )}
 
