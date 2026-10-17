@@ -1,9 +1,10 @@
-// Player.jsx
 
 import "./Player.css";
 
 import {
+  useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -14,10 +15,12 @@ import {
 } from "react-router-dom";
 
 import {
+  AlertCircle,
   ArrowLeft,
   Clock3,
   Heart,
   Play,
+  RefreshCw,
   Star,
   Volume2,
   Eye,
@@ -29,21 +32,42 @@ import {
   addView,
 } from "../services/movies";
 
-/* =========================================
-   HELPERS
-========================================= */
+import useStreamRecovery from "../hooks/useStreamRecovery";
 
 const isYoutube = (movie) =>
   movie?.provider === "youtube";
 
-/* =========================================
-   YOUTUBE PLAYER
-========================================= */
+const formatDuration = (seconds) => {
+  if (
+    !Number.isFinite(seconds) ||
+    seconds <= 0
+  ) {
+    return "--";
+  }
 
-function YoutubePlayer({
-  movie,
-  iframeRef,
-}) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor(
+    (seconds % 3600) / 60
+  );
+
+  return hours > 0
+    ? `${hours}h ${minutes}m`
+    : `${minutes}m`;
+};
+
+const formatViews = (views = 0) => {
+  if (views >= 1000000) {
+    return `${(views / 1000000).toFixed(1)}M`;
+  }
+
+  if (views >= 1000) {
+    return `${(views / 1000).toFixed(1)}K`;
+  }
+
+  return views;
+};
+
+function YoutubePlayer({ movie, iframeRef }) {
   return (
     <div className="video-shell youtube-shell">
       <iframe
@@ -58,488 +82,493 @@ function YoutubePlayer({
   );
 }
 
-/* =========================================
-   PLAYER
-========================================= */
-
 export default function Player() {
   const { id } = useParams();
 
-  const [movie, setMovie] =
-    useState(null);
-
-  const [favorite, setFavorite] =
+  const [movie, setMovie] = useState(null);
+  const [favorite, setFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] =
     useState(false);
-
-  const [loading, setLoading] =
-    useState(false);
-
   const [isLoading, setIsLoading] =
     useState(true);
-
-  const [progress, setProgress] =
-    useState(0);
-
-  const [duration, setDuration] =
-    useState(0);
+  const [loadError, setLoadError] =
+    useState("");
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   const videoRef = useRef(null);
-
   const iframeRef = useRef(null);
 
-  const hasCountedView =
-    useRef(false);
+  const hasCountedView = useRef(false);
+  const watchedSecondsRef = useRef(0);
+  const lastWatchPositionRef = useRef(null);
+  const lastSavedAtRef = useRef(0);
+  const resumePositionRef = useRef(0);
+  const initialSeekDoneRef = useRef(false);
+  const viewInFlightRef = useRef(false);
 
-  const storageKey =
-    `movie-progress-${id}`;
+  const storageKey = `movie-progress-${id}`;
+  const viewStorageKey = `movie-view-${id}`;
 
-  const viewStorageKey =
-    `movie-view-${id}`;
+  const sourceUrl = useMemo(() => {
+    if (!movie || isYoutube(movie)) {
+      return "";
+    }
 
-  /* =========================
-     LOAD MOVIE
-  ========================= */
+    if (!movie.videoUrl) return "";
+
+    const baseUrl =
+      import.meta.env.VITE_API_URL?.replace(
+        /\/$/,
+        ""
+      );
+
+    if (!baseUrl) return "";
+
+    return (
+      `${baseUrl}/stream?page=` +
+      encodeURIComponent(movie.videoUrl)
+    );
+  }, [movie?.videoUrl, movie?.provider]);
+
+  const {
+    streamUrl,
+    recoveryState,
+    resetRecovery,
+    retryManually,
+    handleTimeUpdate: trackStreamProgress,
+    handleWaiting,
+    handleStalled,
+    handlePlaying,
+    handleLoadedMetadata:
+      restoreStreamMetadata,
+    handleCanPlay,
+    handleError,
+    handleEnded: finishRecovery,
+  } = useStreamRecovery({
+    videoRef,
+    sourceUrl,
+  });
+
+  // =========================
+  // CARREGAR FILME
+  // =========================
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadMovie() {
       try {
         setIsLoading(true);
+        setLoadError("");
+        setMovie(null);
+        setDuration(0);
+        setProgress(0);
 
-        const data =
-          await getMovie(id);
+        hasCountedView.current = false;
+        watchedSecondsRef.current = 0;
+        lastWatchPositionRef.current = null;
+        lastSavedAtRef.current = 0;
+        initialSeekDoneRef.current = false;
+        viewInFlightRef.current = false;
 
-        if (!data) return;
+        const data = await getMovie(id);
+
+        if (cancelled) return;
+
+        if (!data) {
+          setLoadError("Filme não encontrado.");
+          return;
+        }
 
         setMovie(data);
-
-        setFavorite(
-          Boolean(data.favorite)
-        );
+        setFavorite(Boolean(data.favorite));
       } catch (error) {
-        console.error(error);
+        if (cancelled) return;
+
+        console.error(
+          "[MiqFlix] Erro ao carregar filme",
+          error
+        );
+
+        setLoadError(
+          "Não foi possível carregar o filme."
+        );
       } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     }
 
     loadMovie();
+
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
-  /* =========================
-     VIDEO METADATA
-  ========================= */
-
-  function handleLoadedMetadata() {
-    const video =
-      videoRef.current;
-
-    if (!video) return;
-
-    const videoDuration =
-      video.duration;
-
-    if (
-      isFinite(videoDuration) &&
-      !isNaN(videoDuration)
-    ) {
-      setDuration(videoDuration);
-    }
-  }
-
-  /* =========================
-     RESTORE PROGRESS
-  ========================= */
+  // =========================
+  // RESTAURAR PROGRESSO
+  // =========================
 
   useEffect(() => {
-    const video =
-      videoRef.current;
+    resumePositionRef.current = 0;
 
-    if (
-      !video ||
-      !movie ||
-      isYoutube(movie)
-    ) {
-      return;
-    }
-
-    const saved =
-      localStorage.getItem(
+    try {
+      const saved = localStorage.getItem(
         storageKey
       );
 
-    if (saved) {
-      try {
-        const parsed =
-          JSON.parse(saved);
+      if (!saved) return;
 
-        video.currentTime =
-          parsed.currentTime || 0;
+      const parsed = JSON.parse(saved);
 
-        setProgress(
-          parsed.percentage || 0
-        );
-      } catch (error) {
-        console.error(error);
+      const currentTime = Number(
+        parsed.currentTime
+      );
+
+      const percentage = Number(
+        parsed.percentage
+      );
+
+      if (
+        Number.isFinite(currentTime) &&
+        currentTime >= 0
+      ) {
+        resumePositionRef.current =
+          currentTime;
       }
+
+      if (
+        Number.isFinite(percentage)
+      ) {
+        setProgress(
+          Math.min(
+            100,
+            Math.max(0, percentage)
+          )
+        );
+      }
+    } catch (error) {
+      console.warn(
+        "[MiqFlix] Progresso inválido",
+        error
+      );
     }
-  }, [movie]);
+  }, [storageKey]);
 
-  /* =========================
-     SAVE PROGRESS
-  ========================= */
+  // =========================
+  // SALVAR PROGRESSO
+  // =========================
 
-  useEffect(() => {
-    const video =
-      videoRef.current;
+  const saveProgress = useCallback(
+    (video, force = false) => {
+      if (
+        !video ||
+        video.ended ||
+        !Number.isFinite(video.currentTime)
+      ) {
+        return;
+      }
 
-    if (
-      !video ||
-      !movie ||
-      isYoutube(movie)
-    ) {
-      return;
-    }
+      const now = Date.now();
 
-    const saveProgress = () => {
-      const current =
-        video.currentTime;
+      if (
+        !force &&
+        now - lastSavedAtRef.current < 5000
+      ) {
+        return;
+      }
 
-      const dur =
-        video.duration || 0;
+      const currentTime = video.currentTime;
 
-      const percentage =
-        dur > 0
-          ? (current / dur) * 100
+      const videoDuration =
+        Number.isFinite(video.duration)
+          ? video.duration
           : 0;
 
-      setProgress(
-        percentage
-      );
+      const percentage =
+        videoDuration > 0
+          ? Math.min(
+              100,
+              (currentTime / videoDuration) *
+                100
+            )
+          : 0;
 
-      localStorage.setItem(
-        storageKey,
-        JSON.stringify({
-          currentTime:
-            current,
+      lastSavedAtRef.current = now;
+      setProgress(percentage);
 
-          duration: dur,
-
-          percentage,
-
-          updatedAt:
-            Date.now(),
-        })
-      );
-    };
-
-    const interval =
-      setInterval(
-        saveProgress,
-        5000
-      );
-
-    video.addEventListener(
-      "timeupdate",
-      saveProgress
-    );
-
-    return () => {
-      clearInterval(interval);
-
-      video.removeEventListener(
-        "timeupdate",
-        saveProgress
-      );
-    };
-  }, [movie]);
-
-  /* =========================
-     COUNT VIEW
-     PROFISSIONAL
-  ========================= */
-
-  useEffect(() => {
-    const video =
-      videoRef.current;
-
-    if (
-      !video ||
-      !movie ||
-      isYoutube(movie)
-    ) {
-      return;
-    }
-
-    async function handleView() {
       try {
-        /* =========================
-           ALREADY COUNTED
-        ========================= */
-
-        if (
-          hasCountedView.current
-        ) {
-          return;
-        }
-
-        /* =========================
-           VIEW TTL
-        ========================= */
-
-        const savedView =
-          localStorage.getItem(
-            viewStorageKey
-          );
-
-        if (savedView) {
-          const lastView =
-            Number(savedView);
-
-          const TWELVE_HOURS =
-            1000 *
-            60 *
-            60 *
-            12;
-
-          const expired =
-            Date.now() -
-              lastView >
-            TWELVE_HOURS;
-
-          if (!expired) {
-            hasCountedView.current =
-              true;
-
-            return;
-          }
-        }
-
-        /* =========================
-           REAL WATCH TIME
-        ========================= */
-
-        if (
-          video.currentTime >= 15
-        ) {
-          hasCountedView.current =
-            true;
-
-          await addView(
-            movie._id
-          );
-
-          /* =========================
-             SAVE TTL
-          ========================= */
-
-          localStorage.setItem(
-            viewStorageKey,
-            Date.now()
-          );
-
-          /* =========================
-             UPDATE LOCAL UI
-          ========================= */
-
-          setMovie((prev) => ({
-            ...prev,
-            views:
-              (prev?.views || 0) +
-              1,
-          }));
-        }
+        localStorage.setItem(
+          storageKey,
+          JSON.stringify({
+            currentTime,
+            duration: videoDuration,
+            percentage,
+            updatedAt: now,
+          })
+        );
       } catch (error) {
-        console.error(
-          "Erro ao registrar view:",
+        console.warn(
+          "[MiqFlix] Falha ao salvar progresso",
           error
         );
       }
-    }
+    },
+    [storageKey]
+  );
 
-    video.addEventListener(
-      "timeupdate",
-      handleView
-    );
+  // =========================
+  // REGISTRAR VISUALIZAÇÃO
+  // =========================
 
-    return () => {
-      video.removeEventListener(
-        "timeupdate",
-        handleView
-      );
-    };
-  }, [movie]);
+  const registerView = useCallback(
+    async () => {
+      if (
+        !movie?._id ||
+        hasCountedView.current ||
+        viewInFlightRef.current ||
+        watchedSecondsRef.current < 15
+      ) {
+        return;
+      }
 
-  /* =========================
-     VIDEO ENDED
-  ========================= */
-
-  useEffect(() => {
-    const video =
-      videoRef.current;
-
-    if (
-      !video ||
-      isYoutube(movie)
-    ) {
-      return;
-    }
-
-    const handleEnded = () => {
-      localStorage.removeItem(
-        storageKey
-      );
-
-      setProgress(100);
-    };
-
-    video.addEventListener(
-      "ended",
-      handleEnded
-    );
-
-    return () =>
-      video.removeEventListener(
-        "ended",
-        handleEnded
-      );
-  }, [movie]);
-
-  /* =========================
-     FAVORITE
-  ========================= */
-
-  async function handleFavorite(
-    e
-  ) {
-    e.preventDefault();
-
-    e.stopPropagation();
-
-    if (!movie) return;
-
-    try {
-      setLoading(true);
-
-      const updatedMovie =
-        await toggleFavorite(
-          movie._id
+      try {
+        const savedView = Number(
+          localStorage.getItem(
+            viewStorageKey
+          ) || 0
         );
 
+        const twelveHours =
+          12 * 60 * 60 * 1000;
+
+        if (
+          savedView &&
+          Date.now() - savedView <
+            twelveHours
+        ) {
+          hasCountedView.current = true;
+          return;
+        }
+
+        viewInFlightRef.current = true;
+
+        await addView(movie._id);
+
+        hasCountedView.current = true;
+
+        localStorage.setItem(
+          viewStorageKey,
+          String(Date.now())
+        );
+
+        setMovie((previous) =>
+          previous?._id === movie._id
+            ? {
+                ...previous,
+                views:
+                  (previous.views || 0) + 1,
+              }
+            : previous
+        );
+      } catch (error) {
+        console.error(
+          "[MiqFlix] Erro ao registrar view",
+          error
+        );
+      } finally {
+        viewInFlightRef.current = false;
+      }
+    },
+    [movie?._id, viewStorageKey]
+  );
+
+  // =========================
+  // EVENTOS DO PLAYER
+  // =========================
+
+  const handleLoadedMetadata = (event) => {
+    const video = event.currentTarget;
+
+    if (
+      Number.isFinite(video.duration)
+    ) {
+      setDuration(video.duration);
+    }
+
+    // A retomada inicial é aplicada apenas
+    // uma vez. Reconexões são gerenciadas
+    // pelo hook.
+    if (!initialSeekDoneRef.current) {
+      initialSeekDoneRef.current = true;
+
+      const savedTime =
+        resumePositionRef.current;
+
+      if (savedTime > 0) {
+        const limit =
+          Number.isFinite(video.duration)
+            ? Math.max(
+                0,
+                video.duration - 1
+              )
+            : savedTime;
+
+        try {
+          video.currentTime = Math.min(
+            savedTime,
+            limit
+          );
+        } catch (error) {
+          console.warn(
+            "[MiqFlix] Falha ao retomar filme",
+            error
+          );
+        }
+      }
+    }
+
+    restoreStreamMetadata(event);
+  };
+
+  const handleVideoTimeUpdate = (event) => {
+    const video = event.currentTarget;
+
+    trackStreamProgress(event);
+    saveProgress(video);
+
+    const current = video.currentTime;
+    const previous =
+      lastWatchPositionRef.current;
+
+    if (
+      previous !== null &&
+      !video.paused &&
+      !video.seeking
+    ) {
+      const delta = current - previous;
+
+      // Não contabiliza saltos grandes
+      // provocados por seek.
+      if (delta > 0 && delta <= 2) {
+        watchedSecondsRef.current += delta;
+      }
+    }
+
+    lastWatchPositionRef.current = current;
+
+    if (
+      watchedSecondsRef.current >= 15
+    ) {
+      registerView();
+    }
+  };
+
+  const handleVideoSeeking = () => {
+    lastWatchPositionRef.current = null;
+  };
+
+  const handleVideoPause = (event) => {
+    saveProgress(
+      event.currentTarget,
+      true
+    );
+  };
+
+  const handleVideoEnded = () => {
+    finishRecovery();
+
+    localStorage.removeItem(storageKey);
+
+    resumePositionRef.current = 0;
+    setProgress(100);
+  };
+
+  // =========================
+  // FAVORITOS
+  // =========================
+
+  async function handleFavorite(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!movie || favoriteLoading) return;
+
+    try {
+      setFavoriteLoading(true);
+
+      const updatedMovie =
+        await toggleFavorite(movie._id);
+
       setFavorite(
-        updatedMovie.favorite
+        Boolean(updatedMovie.favorite)
       );
     } catch (error) {
-      console.error(error);
+      console.error(
+        "[MiqFlix] Erro ao atualizar favorito",
+        error
+      );
     } finally {
-      setLoading(false);
+      setFavoriteLoading(false);
     }
   }
 
-  /* =========================
-     WATCH NOW
-  ========================= */
+  // =========================
+  // ASSISTIR AGORA
+  // =========================
 
   async function handleWatchNow() {
     if (isYoutube(movie)) {
-      iframeRef.current?.scrollIntoView(
-        {
-          behavior: "smooth",
-          block: "center",
-        }
-      );
+      iframeRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
 
       return;
     }
 
-    const video =
-      videoRef.current;
+    const video = videoRef.current;
 
     if (!video) return;
 
     try {
       await video.play();
 
-      if (
-        document.fullscreenElement ==
-        null
-      ) {
-        if (
-          video.requestFullscreen
-        ) {
-          await video.requestFullscreen();
-        } else if (
-          video.webkitEnterFullscreen
-        ) {
-          video.webkitEnterFullscreen();
-        }
-      }
-
       video.scrollIntoView({
         behavior: "smooth",
         block: "center",
       });
+
+      if (!document.fullscreenElement) {
+        try {
+          if (video.requestFullscreen) {
+            await video.requestFullscreen();
+          } else if (
+            video.webkitEnterFullscreen
+          ) {
+            video.webkitEnterFullscreen();
+          }
+        } catch (error) {
+          console.warn(
+            "[MiqFlix] Tela cheia indisponível",
+            error
+          );
+        }
+      }
     } catch (error) {
       console.error(
-        "Erro ao iniciar vídeo:",
+        "[MiqFlix] Falha ao iniciar reprodução",
         error
       );
     }
   }
 
-  /* =========================
-     FORMAT DURATION
-  ========================= */
-
-  function formatDuration(
-    seconds
-  ) {
-    if (
-      !seconds ||
-      !isFinite(seconds)
-    ) {
-      return "--";
-    }
-
-    const hours =
-      Math.floor(
-        seconds / 3600
-      );
-
-    const minutes =
-      Math.floor(
-        (seconds % 3600) / 60
-      );
-
-    return hours > 0
-      ? `${hours}h ${minutes}m`
-      : `${minutes}m`;
-  }
-
-  /* =========================
-     FORMAT VIEWS
-  ========================= */
-
-  function formatViews(
-    views = 0
-  ) {
-    if (views >= 1000000) {
-      return `${(
-        views / 1000000
-      ).toFixed(1)}M`;
-    }
-
-    if (views >= 1000) {
-      return `${(
-        views / 1000
-      ).toFixed(1)}K`;
-    }
-
-    return views;
-  }
-
-  /* =========================
-     LOADING
-  ========================= */
+  // =========================
+  // RENDER
+  // =========================
 
   if (isLoading) {
     return (
@@ -549,30 +578,19 @@ export default function Player() {
     );
   }
 
-  /* =========================
-     NOT FOUND
-  ========================= */
-
   if (!movie) {
     return (
       <div className="player-error">
-        Filme não encontrado.
+        {loadError || "Filme não encontrado."}
       </div>
     );
   }
-
-  /* =========================
-     RENDER
-  ========================= */
 
   return (
     <div className="player-page">
       <div className="player-backdrop">
         <img
-          src={
-            movie.cover ||
-            movie.backdrop
-          }
+          src={movie.cover || movie.backdrop}
           alt={movie.title}
         />
       </div>
@@ -591,9 +609,6 @@ export default function Player() {
 
       <div className="player-content">
         <div className="player-video-section">
-
-          {/* PLAYER */}
-
           {isYoutube(movie) ? (
             <YoutubePlayer
               movie={movie}
@@ -602,7 +617,9 @@ export default function Player() {
           ) : (
             <div className="video-shell">
               <video
+                key={`${movie._id}-${streamUrl}`}
                 ref={videoRef}
+                src={streamUrl}
                 controls
                 preload="metadata"
                 playsInline
@@ -610,16 +627,59 @@ export default function Player() {
                 onLoadedMetadata={
                   handleLoadedMetadata
                 }
-              >
-                <source
-                  src={`${import.meta.env.VITE_API_URL}/stream?page=${encodeURIComponent(movie.videoUrl)}`}
-                  type="video/mp4"
-                />
-              </video>
+                onCanPlay={handleCanPlay}
+                onTimeUpdate={
+                  handleVideoTimeUpdate
+                }
+                onSeeking={
+                  handleVideoSeeking
+                }
+                onPause={handleVideoPause}
+                onWaiting={handleWaiting}
+                onStalled={handleStalled}
+                onPlaying={handlePlaying}
+                onError={handleError}
+                onEnded={handleVideoEnded}
+              />
+
+              {recoveryState.recovering && (
+                <div
+                  className="stream-recovery-status"
+                  role="status"
+                >
+                  <RefreshCw
+                    size={18}
+                    className="spin"
+                  />
+                  Restabelecendo conexão...
+                  Tentativa{" "}
+                  {recoveryState.attempts}
+                  /3
+                </div>
+              )}
+
+              {recoveryState.error && (
+                <div
+                  className="stream-recovery-error"
+                  role="alert"
+                >
+                  <AlertCircle size={18} />
+
+                  <span>
+                    {recoveryState.error}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={retryManually}
+                  >
+                    <RefreshCw size={16} />
+                    Tentar novamente
+                  </button>
+                </div>
+              )}
             </div>
           )}
-
-          {/* PROGRESS */}
 
           {!isYoutube(movie) && (
             <div className="player-progress-wrapper">
@@ -629,10 +689,7 @@ export default function Player() {
                 </span>
 
                 <span>
-                  {Math.floor(
-                    progress
-                  )}
-                  %
+                  {Math.floor(progress)}%
                 </span>
               </div>
 
@@ -651,9 +708,7 @@ export default function Player() {
         <div className="player-info-card">
           <div className="player-title-row">
             <div>
-              <h1>
-                {movie.title}
-              </h1>
+              <h1>{movie.title}</h1>
 
               <div className="player-meta">
                 <span>
@@ -661,33 +716,31 @@ export default function Player() {
                   9.2
                 </span>
 
-                <span>
-                  {movie.year}
-                </span>
+                <span>{movie.year}</span>
 
                 <span>
                   <Eye size={16} />
-                  {formatViews(
-                    movie.views
-                  )}{" "}
+                  {formatViews(movie.views)}{" "}
                   views
                 </span>
 
                 {!isYoutube(movie) && (
                   <span>
                     <Clock3 size={16} />
-                    {formatDuration(
-                      duration
-                    )}
+                    {formatDuration(duration)}
                   </span>
                 )}
 
                 <button
+                  type="button"
                   className="favorite-button"
-                  onClick={
-                    handleFavorite
+                  onClick={handleFavorite}
+                  disabled={favoriteLoading}
+                  aria-label={
+                    favorite
+                      ? "Remover dos favoritos"
+                      : "Adicionar aos favoritos"
                   }
-                  disabled={loading}
                 >
                   <Heart
                     size={20}
@@ -708,10 +761,9 @@ export default function Player() {
 
           <div className="player-actions">
             <button
+              type="button"
               className="watch-button"
-              onClick={
-                handleWatchNow
-              }
+              onClick={handleWatchNow}
             >
               <Play size={18} />
 
@@ -720,7 +772,10 @@ export default function Player() {
                 : "Assistir agora"}
             </button>
 
-            <button className="secondary-button">
+            <button
+              type="button"
+              className="secondary-button"
+            >
               <Volume2 size={18} />
               Trailer
             </button>
