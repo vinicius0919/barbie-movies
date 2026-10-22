@@ -7,6 +7,7 @@ import { Plus, AlertCircle, Loader2 } from "lucide-react";
 import {
   getSeries,
   getSeriesById,
+  getAdminSeriesById,
   createSeries,
   updateSeries,
   deleteSeries,
@@ -367,7 +368,7 @@ export default function SeriesManager() {
 
       // Always fetch the complete administrative document.
       // The card/list may not contain seasons and episodes.
-      const completeSeries = await getSeriesById(
+      const completeSeries = await getAdminSeriesById(
         series._id
       );
 

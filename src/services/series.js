@@ -126,6 +126,20 @@ export async function getSeriesById(id) {
 }
 
 // =========================================
+// SERIES - ADMIN READ
+// =========================================
+
+// Recupera séries publicadas ou não publicadas.
+// Requer autenticação de administrador.
+export async function getAdminSeriesById(id) {
+  const response = await api.get(
+    `${BASE_URL}/admin/${encodeURIComponent(id)}`
+  );
+
+  return response.data;
+}
+
+// =========================================
 // SERIES - CREATE / UPDATE / DELETE
 // =========================================
 
