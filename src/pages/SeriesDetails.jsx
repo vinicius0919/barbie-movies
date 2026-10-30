@@ -13,6 +13,8 @@ import SeriesHero from "../components/series-details/SeriesHero";
 import SeriesPlayer from "../components/series-details/SeriesPlayer";
 import SeriesSeasons from "../components/series-details/SeriesSeasons";
 
+import { getYouTubeEmbedUrl } from "../utils/youtube";
+
 export default function SeriesDetails() {
   const { id } = useParams();
 
@@ -64,6 +66,12 @@ export default function SeriesDetails() {
 
   const streamUrl = useMemo(() => {
     if (!playbackRequested || !currentEpisode?.videoUrl) {
+      return "";
+    }
+
+    // O YouTube deve ser reproduzido no iframe oficial,
+    // não via /stream.
+    if (getYouTubeEmbedUrl(currentEpisode.videoUrl)) {
       return "";
     }
 

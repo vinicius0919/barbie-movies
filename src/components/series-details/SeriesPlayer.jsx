@@ -1,10 +1,4 @@
-
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const SAVE_INTERVAL_SECONDS = 15;
 
@@ -12,7 +6,7 @@ const STALL_TIMEOUT_MS = 20000;
 const CHECK_INTERVAL_MS = 2000;
 const MAX_RETRIES = 3;
 const STABLE_PLAYBACK_MS = 60000;
-
+import { getYouTubeEmbedUrl } from "../../utils/youtube";
 function createRecoveryState() {
   return {
     attempts: 0,
@@ -49,12 +43,10 @@ export default function SeriesPlayer({
   const [retryToken, setRetryToken] = useState(0);
 
   const episodeKey = episode?._id || null;
-
+  const youtubeEmbedUrl = getYouTubeEmbedUrl(episode?.videoUrl);
   const activeSource =
     playbackRequested && streamUrl
-      ? `${streamUrl}${
-          streamUrl.includes("?") ? "&" : "?"
-        }_retry=${retryToken}`
+      ? `${streamUrl}${streamUrl.includes("?") ? "&" : "?"}_retry=${retryToken}`
       : "";
 
   // =========================================
@@ -67,10 +59,9 @@ export default function SeriesPlayer({
     lastSavedSecondRef.current = 0;
     resumeAppliedRef.current = false;
 
-    initialResumeTimeRef.current =
-      Number.isFinite(resumeTime)
-        ? Math.max(0, resumeTime)
-        : 0;
+    initialResumeTimeRef.current = Number.isFinite(resumeTime)
+      ? Math.max(0, resumeTime)
+      : 0;
 
     setRetryToken(0);
   }, [episodeKey, streamUrl]);
@@ -79,26 +70,21 @@ export default function SeriesPlayer({
   // PLAYBACK DATA
   // =========================================
 
-  const getPlaybackData = useCallback(
-    (video, completed = false) => {
-      const currentTime =
-        Number.isFinite(video.currentTime)
-          ? Math.max(0, video.currentTime)
-          : 0;
+  const getPlaybackData = useCallback((video, completed = false) => {
+    const currentTime = Number.isFinite(video.currentTime)
+      ? Math.max(0, video.currentTime)
+      : 0;
 
-      const duration =
-        Number.isFinite(video.duration)
-          ? Math.max(0, video.duration)
-          : 0;
+    const duration = Number.isFinite(video.duration)
+      ? Math.max(0, video.duration)
+      : 0;
 
-      return {
-        currentTime,
-        duration,
-        completed,
-      };
-    },
-    []
-  );
+    return {
+      currentTime,
+      duration,
+      completed,
+    };
+  }, []);
 
   // =========================================
   // SAVE PROGRESS
@@ -106,34 +92,23 @@ export default function SeriesPlayer({
 
   const persist = useCallback(
     (video, completed = false) => {
-      if (
-        !video ||
-        !episode ||
-        !onProgress
-      ) {
+      if (!video || !episode || !onProgress) {
         return;
       }
 
       // Evita salvar posições incorretas
       // durante a recuperação.
-      if (
-        recoveryRef.current.recovering &&
-        !completed
-      ) {
+      if (recoveryRef.current.recovering && !completed) {
         return;
       }
 
-      const data = getPlaybackData(
-        video,
-        completed
-      );
+      const data = getPlaybackData(video, completed);
 
-      lastSavedSecondRef.current =
-        Math.floor(data.currentTime);
+      lastSavedSecondRef.current = Math.floor(data.currentTime);
 
       onProgress(data);
     },
-    [episode, onProgress, getPlaybackData]
+    [episode, onProgress, getPlaybackData],
   );
 
   // =========================================
@@ -157,60 +132,41 @@ export default function SeriesPlayer({
 
     const now = Date.now();
 
-    if (
-      state.recovering &&
-      now - state.recoveryStartedAt <
-        STALL_TIMEOUT_MS
-    ) {
+    if (state.recovering && now - state.recoveryStartedAt < STALL_TIMEOUT_MS) {
       return;
     }
 
     state.attempts += 1;
     state.recovering = true;
 
-    state.wantsPlayback =
-      state.wantsPlayback || !video.paused;
+    state.wantsPlayback = state.wantsPlayback || !video.paused;
 
-    const position =
-      Number.isFinite(video.currentTime)
-        ? video.currentTime
-        : state.lastPosition;
+    const position = Number.isFinite(video.currentTime)
+      ? video.currentTime
+      : state.lastPosition;
 
-    state.pendingSeek = Math.max(
-      0,
-      position - 0.5
-    );
+    state.pendingSeek = Math.max(0, position - 0.5);
 
     state.recoveryStartedAt = now;
     state.lastProgressAt = now;
     state.waitingSince = null;
     state.stableSince = null;
 
-    console.warn(
-      "[SeriesPlayer] Reconexão interna",
-      {
-        episode: episodeKey,
-        attempt: state.attempts,
-        position: state.pendingSeek,
-      }
-    );
+    console.warn("[SeriesPlayer] Reconexão interna", {
+      episode: episodeKey,
+      attempt: state.attempts,
+      position: state.pendingSeek,
+    });
 
     setRetryToken((value) => value + 1);
-  }, [
-    playbackRequested,
-    streamUrl,
-    episodeKey,
-  ]);
+  }, [playbackRequested, streamUrl, episodeKey]);
 
   // =========================================
   // RECOVERY WATCHDOG
   // =========================================
 
   useEffect(() => {
-    if (
-      !playbackRequested ||
-      !streamUrl
-    ) {
+    if (!playbackRequested || !streamUrl) {
       return;
     }
 
@@ -218,22 +174,14 @@ export default function SeriesPlayer({
       const video = videoRef.current;
       const state = recoveryRef.current;
 
-      if (
-        !video ||
-        state.ended ||
-        video.ended ||
-        video.seeking
-      ) {
+      if (!video || state.ended || video.ended || video.seeking) {
         return;
       }
 
       const now = Date.now();
 
       if (state.recovering) {
-        if (
-          now - state.recoveryStartedAt >=
-          STALL_TIMEOUT_MS
-        ) {
+        if (now - state.recoveryStartedAt >= STALL_TIMEOUT_MS) {
           recover();
         }
 
@@ -244,14 +192,9 @@ export default function SeriesPlayer({
         return;
       }
 
-      const referenceTime =
-        state.waitingSince ??
-        state.lastProgressAt;
+      const referenceTime = state.waitingSince ?? state.lastProgressAt;
 
-      if (
-        now - referenceTime >=
-        STALL_TIMEOUT_MS
-      ) {
+      if (now - referenceTime >= STALL_TIMEOUT_MS) {
         recover();
       }
     }, CHECK_INTERVAL_MS);
@@ -259,11 +202,7 @@ export default function SeriesPlayer({
     return () => {
       clearInterval(interval);
     };
-  }, [
-    playbackRequested,
-    streamUrl,
-    recover,
-  ]);
+  }, [playbackRequested, streamUrl, recover]);
 
   // =========================================
   // LOADED METADATA
@@ -285,21 +224,14 @@ export default function SeriesPlayer({
       resumeAppliedRef.current = true;
     }
 
-    if (
-      target === null ||
-      !Number.isFinite(target) ||
-      target <= 0
-    ) {
+    if (target === null || !Number.isFinite(target) || target <= 0) {
       return;
     }
 
     const duration = video.duration;
 
     if (Number.isFinite(duration)) {
-      target = Math.min(
-        target,
-        Math.max(0, duration - 2)
-      );
+      target = Math.min(target, Math.max(0, duration - 2));
     }
 
     try {
@@ -307,10 +239,7 @@ export default function SeriesPlayer({
       state.lastPosition = target;
       state.lastProgressAt = Date.now();
     } catch (error) {
-      console.warn(
-        "[SeriesPlayer] Retomada indisponível",
-        error
-      );
+      console.warn("[SeriesPlayer] Retomada indisponível", error);
     }
   };
 
@@ -328,8 +257,7 @@ export default function SeriesPlayer({
       return;
     }
 
-    const advanced =
-      position > state.lastPosition + 0.1;
+    const advanced = position > state.lastPosition + 0.1;
 
     if (advanced) {
       state.lastPosition = position;
@@ -342,40 +270,27 @@ export default function SeriesPlayer({
         state.stableSince = Date.now();
       }
 
-      if (
-        !video.paused &&
-        state.stableSince === null
-      ) {
+      if (!video.paused && state.stableSince === null) {
         state.stableSince = Date.now();
       }
 
       if (
         state.stableSince !== null &&
         !video.paused &&
-        Date.now() - state.stableSince >=
-          STABLE_PLAYBACK_MS
+        Date.now() - state.stableSince >= STABLE_PLAYBACK_MS
       ) {
         state.attempts = 0;
         state.stableSince = Date.now();
       }
     }
 
-    if (
-      video.paused ||
-      video.seeking ||
-      state.recovering
-    ) {
+    if (video.paused || video.seeking || state.recovering) {
       return;
     }
 
-    const currentSecond =
-      Math.floor(position);
+    const currentSecond = Math.floor(position);
 
-    if (
-      currentSecond -
-        lastSavedSecondRef.current >=
-      SAVE_INTERVAL_SECONDS
-    ) {
+    if (currentSecond - lastSavedSecondRef.current >= SAVE_INTERVAL_SECONDS) {
       persist(video);
     }
   };
@@ -420,8 +335,7 @@ export default function SeriesPlayer({
   const handleSeeked = (event) => {
     const state = recoveryRef.current;
 
-    state.lastPosition =
-      event.currentTarget.currentTime;
+    state.lastPosition = event.currentTarget.currentTime;
 
     state.lastProgressAt = Date.now();
     state.waitingSince = null;
@@ -471,20 +385,14 @@ export default function SeriesPlayer({
     const video = event.currentTarget;
     const state = recoveryRef.current;
 
-    if (
-      !state.recovering ||
-      !state.wantsPlayback
-    ) {
+    if (!state.recovering || !state.wantsPlayback) {
       return;
     }
 
     try {
       await video.play();
     } catch (error) {
-      console.warn(
-        "[SeriesPlayer] Reprodução automática indisponível",
-        error
-      );
+      console.warn("[SeriesPlayer] Reprodução automática indisponível", error);
     }
   };
 
@@ -495,20 +403,14 @@ export default function SeriesPlayer({
   const handleError = (event) => {
     const video = event.currentTarget;
 
-    console.error(
-      "[SeriesPlayer] Erro de mídia",
-      {
-        episode: episodeKey,
-        code: video.error?.code,
-        message: video.error?.message,
-        currentTime: video.currentTime,
-      }
-    );
+    console.error("[SeriesPlayer] Erro de mídia", {
+      episode: episodeKey,
+      code: video.error?.code,
+      message: video.error?.message,
+      currentTime: video.currentTime,
+    });
 
-    if (
-      recoveryRef.current.attempts <
-      MAX_RETRIES
-    ) {
+    if (recoveryRef.current.attempts < MAX_RETRIES) {
       recover();
       return;
     }
@@ -539,13 +441,25 @@ export default function SeriesPlayer({
 
   return (
     <section className="series-player-section">
-      {playbackError && (
-        <p className="series-player-error">
-          {playbackError}
-        </p>
-      )}
+      {playbackError && <p className="series-player-error">{playbackError}</p>}
 
-      {playbackRequested && streamUrl ? (
+      {playbackRequested && youtubeEmbedUrl ? (
+        <div className="series-video-wrapper">
+          <iframe
+            key={`${episodeKey}-${youtubeEmbedUrl}`}
+            className="series-video"
+            src={youtubeEmbedUrl}
+            title={episode?.title || "Reprodução do episódio"}
+            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+            allowFullScreen
+            referrerPolicy="strict-origin-when-cross-origin"
+            style={{
+              border: 0,
+              display: "block",
+            }}
+          />
+        </div>
+      ) : playbackRequested && streamUrl ? (
         <video
           key={`${episodeKey}-${activeSource}`}
           ref={videoRef}
@@ -553,9 +467,7 @@ export default function SeriesPlayer({
           playsInline
           preload="metadata"
           src={activeSource}
-          onLoadedMetadata={
-            handleLoadedMetadata
-          }
+          onLoadedMetadata={handleLoadedMetadata}
           onCanPlay={handleCanPlay}
           onPlay={handlePlay}
           onPlaying={handlePlaying}
@@ -570,9 +482,7 @@ export default function SeriesPlayer({
         />
       ) : (
         <div className="series-player-placeholder">
-          <p>
-            Selecione um episódio para começar a assistir.
-          </p>
+          <p>Selecione um episódio para começar a assistir.</p>
         </div>
       )}
     </section>
