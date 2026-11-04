@@ -17,13 +17,12 @@ const api = axios.create({
 // =============================================
 
 if (import.meta.env.DEV) {
-  console.log("[MIQFLIX API] Base URL:", API_URL);
 
   api.interceptors.request.use((config) => {
-    console.log("[MIQFLIX REQUEST]", {
-      method: config.method?.toUpperCase(),
-      url: api.getUri(config),
-    });
+    // console.log("[MIQFLIX REQUEST]", {
+    //   method: config.method?.toUpperCase(),
+    //   url: api.getUri(config),
+    // });
 
     return config;
   });

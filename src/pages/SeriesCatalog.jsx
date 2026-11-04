@@ -29,7 +29,6 @@ export default function SeriesCatalog() {
         setError("");
 
         const data = await getSeries();
-        console.log("SeriesCatalog - loadSeries", data);
 
         if (active) {
           setSeriesList(

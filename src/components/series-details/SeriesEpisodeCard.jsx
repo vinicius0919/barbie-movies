@@ -10,8 +10,6 @@ export default function SeriesEpisodeCard({
   poster
 }) {
 
-    console.log("SeriesEpisodeCard - episode", episode);
-    console.log("SeriesEpisodeCard - poster", poster);
   return (
     <button
       type="button"

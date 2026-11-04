@@ -84,7 +84,6 @@ export default function SearchMovie({
           currentPage
         );
 
-      console.log(data.results);
 
       setResults(
         Array.isArray(
@@ -128,7 +127,6 @@ export default function SearchMovie({
 
       setAdding(true);
 
-      console.log(selectedMovie);
 
       await addMovie({
         tmdbId:
