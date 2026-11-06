@@ -1,18 +1,8 @@
-
 import "./Player.css";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import {
-  Link,
-  useParams,
-} from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 import {
   ArrowLeft,
@@ -24,11 +14,7 @@ import {
   Eye,
 } from "lucide-react";
 
-import {
-  getMovie,
-  toggleFavorite,
-  addView,
-} from "../services/movies";
+import { getMovie, toggleFavorite, addView } from "../services/movies";
 
 import useStreamRecovery from "../hooks/useStreamRecovery";
 
@@ -36,25 +22,17 @@ import useStreamRecovery from "../hooks/useStreamRecovery";
 // HELPERS
 // =========================================
 
-const isYoutube = (movie) =>
-  movie?.provider === "youtube";
+const isYoutube = (movie) => movie?.provider === "youtube";
 
 const formatDuration = (seconds) => {
-  if (
-    !Number.isFinite(seconds) ||
-    seconds <= 0
-  ) {
+  if (!Number.isFinite(seconds) || seconds <= 0) {
     return "--";
   }
 
   const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor(
-    (seconds % 3600) / 60
-  );
+  const minutes = Math.floor((seconds % 3600) / 60);
 
-  return hours > 0
-    ? `${hours}h ${minutes}m`
-    : `${minutes}m`;
+  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
 };
 
 const formatViews = (views = 0) => {
@@ -73,10 +51,7 @@ const formatViews = (views = 0) => {
 // YOUTUBE PLAYER
 // =========================================
 
-function YoutubePlayer({
-  movie,
-  iframeRef,
-}) {
+function YoutubePlayer({ movie, iframeRef }) {
   return (
     <div className="video-shell youtube-shell">
       <iframe
@@ -100,8 +75,8 @@ export default function Player() {
 
   const [movie, setMovie] = useState(null);
   const [favorite, setFavorite] = useState(false);
-  const [favoriteLoading, setFavoriteLoading] =
-    useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [progress, setProgress] = useState(0);
@@ -136,18 +111,11 @@ export default function Player() {
       return "";
     }
 
-    const baseUrl =
-      import.meta.env.VITE_API_URL?.replace(
-        /\/$/,
-        ""
-      );
+    const baseUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
 
     if (!baseUrl) return "";
 
-    return (
-      `${baseUrl}/stream?page=` +
-      encodeURIComponent(movie.videoUrl)
-    );
+    return `${baseUrl}/stream?page=` + encodeURIComponent(movie.videoUrl);
   }, [movie?.videoUrl, movie?.provider]);
 
   // =========================================
@@ -210,14 +178,9 @@ export default function Player() {
       } catch (error) {
         if (cancelled) return;
 
-        console.error(
-          "[MiqFlix] Erro ao carregar filme",
-          error
-        );
+        console.error("[MiqFlix] Erro ao carregar filme", error);
 
-        setLoadError(
-          "Não foi possível carregar o filme."
-        );
+        setLoadError("Não foi possível carregar o filme.");
       } finally {
         if (!cancelled) {
           setIsLoading(false);
@@ -240,44 +203,24 @@ export default function Player() {
     resumePositionRef.current = 0;
 
     try {
-      const saved = localStorage.getItem(
-        storageKey
-      );
+      const saved = localStorage.getItem(storageKey);
 
       if (!saved) return;
 
       const parsed = JSON.parse(saved);
 
-      const savedTime = Number(
-        parsed.currentTime
-      );
+      const savedTime = Number(parsed.currentTime);
+      const savedPercentage = Number(parsed.percentage);
 
-      const savedPercentage = Number(
-        parsed.percentage
-      );
-
-      if (
-        Number.isFinite(savedTime) &&
-        savedTime >= 0
-      ) {
+      if (Number.isFinite(savedTime) && savedTime >= 0) {
         resumePositionRef.current = savedTime;
       }
 
-      if (
-        Number.isFinite(savedPercentage)
-      ) {
-        setProgress(
-          Math.min(
-            100,
-            Math.max(0, savedPercentage)
-          )
-        );
+      if (Number.isFinite(savedPercentage)) {
+        setProgress(Math.min(100, Math.max(0, savedPercentage)));
       }
     } catch (error) {
-      console.warn(
-        "[MiqFlix] Progresso inválido",
-        error
-      );
+      console.warn("[MiqFlix] Progresso inválido", error);
     }
   }, [storageKey]);
 
@@ -299,30 +242,22 @@ export default function Player() {
 
       const now = Date.now();
 
-      if (
-        !force &&
-        now - lastSavedAtRef.current < 5000
-      ) {
+      if (!force && now - lastSavedAtRef.current < 5000) {
         return;
       }
 
       const currentTime = video.currentTime;
 
-      const videoDuration =
-        Number.isFinite(video.duration)
-          ? video.duration
-          : 0;
+      const videoDuration = Number.isFinite(video.duration)
+        ? video.duration
+        : 0;
 
       const percentage =
         videoDuration > 0
-          ? Math.min(
-              100,
-              (currentTime / videoDuration) * 100
-            )
+          ? Math.min(100, (currentTime / videoDuration) * 100)
           : 0;
 
       lastSavedAtRef.current = now;
-
       setProgress(percentage);
 
       try {
@@ -333,82 +268,61 @@ export default function Player() {
             duration: videoDuration,
             percentage,
             updatedAt: now,
-          })
+          }),
         );
       } catch (error) {
-        console.warn(
-          "[MiqFlix] Erro ao salvar progresso",
-          error
-        );
+        console.warn("[MiqFlix] Erro ao salvar progresso", error);
       }
     },
-    [storageKey, isRecovering]
+    [storageKey, isRecovering],
   );
 
   // =========================================
   // COUNT VIEW
   // =========================================
 
-  const registerView = useCallback(
-    async () => {
-      if (
-        !movie?._id ||
-        hasCountedView.current ||
-        viewInFlightRef.current ||
-        watchedSecondsRef.current < 15
-      ) {
+  const registerView = useCallback(async () => {
+    if (
+      !movie?._id ||
+      hasCountedView.current ||
+      viewInFlightRef.current ||
+      watchedSecondsRef.current < 15
+    ) {
+      return;
+    }
+
+    try {
+      const savedView = Number(localStorage.getItem(viewStorageKey) || 0);
+
+      const twelveHours = 12 * 60 * 60 * 1000;
+
+      if (savedView && Date.now() - savedView < twelveHours) {
+        hasCountedView.current = true;
         return;
       }
 
-      try {
-        const savedView = Number(
-          localStorage.getItem(
-            viewStorageKey
-          ) || 0
-        );
+      viewInFlightRef.current = true;
 
-        const twelveHours =
-          12 * 60 * 60 * 1000;
+      await addView(movie._id);
 
-        if (
-          savedView &&
-          Date.now() - savedView < twelveHours
-        ) {
-          hasCountedView.current = true;
-          return;
-        }
+      hasCountedView.current = true;
 
-        viewInFlightRef.current = true;
+      localStorage.setItem(viewStorageKey, String(Date.now()));
 
-        await addView(movie._id);
-
-        hasCountedView.current = true;
-
-        localStorage.setItem(
-          viewStorageKey,
-          String(Date.now())
-        );
-
-        setMovie((previous) =>
-          previous?._id === movie._id
-            ? {
-                ...previous,
-                views:
-                  (previous.views || 0) + 1,
-              }
-            : previous
-        );
-      } catch (error) {
-        console.error(
-          "[MiqFlix] Erro ao registrar view",
-          error
-        );
-      } finally {
-        viewInFlightRef.current = false;
-      }
-    },
-    [movie?._id, viewStorageKey]
-  );
+      setMovie((previous) =>
+        previous?._id === movie._id
+          ? {
+              ...previous,
+              views: (previous.views || 0) + 1,
+            }
+          : previous,
+      );
+    } catch (error) {
+      console.error("[MiqFlix] Erro ao registrar view", error);
+    } finally {
+      viewInFlightRef.current = false;
+    }
+  }, [movie?._id, viewStorageKey]);
 
   // =========================================
   // VIDEO METADATA
@@ -424,29 +338,23 @@ export default function Player() {
     if (!initialSeekDoneRef.current) {
       initialSeekDoneRef.current = true;
 
-      const savedTime =
-        resumePositionRef.current;
+      const savedTime = resumePositionRef.current;
 
       if (savedTime > 0) {
-        const limit =
-          Number.isFinite(video.duration)
-            ? Math.max(0, video.duration - 1)
-            : savedTime;
+        const limit = Number.isFinite(video.duration)
+          ? Math.max(0, video.duration - 1)
+          : savedTime;
 
         try {
-          video.currentTime = Math.min(
-            savedTime,
-            limit
-          );
+          video.currentTime = Math.min(savedTime, limit);
         } catch (error) {
-          console.warn(
-            "[MiqFlix] Falha ao restaurar progresso",
-            error
-          );
+          console.warn("[MiqFlix] Falha ao restaurar progresso", error);
         }
       }
     }
 
+    // Restaura a posição específica do recovery,
+    // quando houver uma reconexão em andamento.
     restoreStreamMetadata(event);
   };
 
@@ -464,17 +372,11 @@ export default function Player() {
     }
 
     const current = video.currentTime;
-    const previous =
-      lastWatchPositionRef.current;
+    const previous = lastWatchPositionRef.current;
 
-    if (
-      previous !== null &&
-      !video.paused &&
-      !video.seeking
-    ) {
+    if (previous !== null && !video.paused && !video.seeking) {
       const delta = current - previous;
 
-      // Evita contar grandes saltos de tempo.
       if (delta > 0 && delta <= 2) {
         watchedSecondsRef.current += delta;
       }
@@ -482,9 +384,7 @@ export default function Player() {
 
     lastWatchPositionRef.current = current;
 
-    if (
-      watchedSecondsRef.current >= 15
-    ) {
+    if (watchedSecondsRef.current >= 15) {
       registerView();
     }
   };
@@ -499,8 +399,7 @@ export default function Player() {
   };
 
   const handleVideoSeeked = (event) => {
-    lastWatchPositionRef.current =
-      event.currentTarget.currentTime;
+    lastWatchPositionRef.current = event.currentTarget.currentTime;
 
     trackStreamSeeked(event);
   };
@@ -514,10 +413,7 @@ export default function Player() {
 
     if (isRecovering()) return;
 
-    saveProgress(
-      event.currentTarget,
-      true
-    );
+    saveProgress(event.currentTarget, true);
   };
 
   // =========================================
@@ -529,7 +425,11 @@ export default function Player() {
 
     finishRecovery();
 
-    localStorage.removeItem(storageKey);
+    try {
+      localStorage.removeItem(storageKey);
+    } catch (error) {
+      console.warn("[MiqFlix] Erro ao limpar progresso", error);
+    }
 
     resumePositionRef.current = 0;
     setProgress(100);
@@ -548,24 +448,18 @@ export default function Player() {
     try {
       setFavoriteLoading(true);
 
-      const updatedMovie =
-        await toggleFavorite(movie._id);
+      const updatedMovie = await toggleFavorite(movie._id);
 
-      setFavorite(
-        Boolean(updatedMovie.favorite)
-      );
+      setFavorite(Boolean(updatedMovie.favorite));
     } catch (error) {
-      console.error(
-        "[MiqFlix] Erro ao atualizar favorito",
-        error
-      );
+      console.error("[MiqFlix] Erro ao atualizar favorito", error);
     } finally {
       setFavoriteLoading(false);
     }
   }
 
   // =========================================
-  // WATCH NOW
+  // WATCH NOW / FULLSCREEN
   // =========================================
 
   async function handleWatchNow() {
@@ -582,35 +476,48 @@ export default function Player() {
 
     if (!video) return;
 
+    // Solicita a reprodução sem aguardar.
+    // Isso permite solicitar o fullscreen
+    // durante a mesma interação do usuário.
+    let playPromise;
+
     try {
-      await video.play();
-
-      video.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-
-      if (!document.fullscreenElement) {
-        try {
-          if (video.requestFullscreen) {
-            await video.requestFullscreen();
-          } else if (
-            video.webkitEnterFullscreen
-          ) {
-            video.webkitEnterFullscreen();
-          }
-        } catch (error) {
-          console.warn(
-            "[MiqFlix] Tela cheia indisponível",
-            error
-          );
-        }
-      }
+      playPromise = video.play();
     } catch (error) {
-      console.error(
-        "[MiqFlix] Erro ao iniciar vídeo",
-        error
-      );
+      console.error("[MiqFlix] Erro ao iniciar reprodução", error);
+      return;
+    }
+
+    // IMPORTANTE:
+    // Não aguardar video.play() antes de
+    // solicitar a tela cheia.
+    //
+    // Alguns navegadores exigem que
+    // requestFullscreen() seja chamado
+    // durante a ativação do usuário.
+
+    if (!document.fullscreenElement) {
+      try {
+        if (video.requestFullscreen) {
+          const fullscreenPromise = video.requestFullscreen();
+
+          fullscreenPromise?.catch((error) => {
+            console.warn("[MiqFlix] Tela cheia indisponível", error);
+          });
+        } else if (video.webkitEnterFullscreen) {
+          // Compatibilidade com alguns navegadores
+          // Safari / iOS.
+          video.webkitEnterFullscreen();
+        }
+      } catch (error) {
+        console.warn("[MiqFlix] Não foi possível ativar tela cheia", error);
+      }
+    }
+
+    try {
+      await playPromise;
+    } catch (error) {
+      console.error("[MiqFlix] Erro ao iniciar vídeo", error);
     }
   }
 
@@ -628,28 +535,20 @@ export default function Player() {
 
   if (!movie) {
     return (
-      <div className="player-error">
-        {loadError || "Filme não encontrado."}
-      </div>
+      <div className="player-error">{loadError || "Filme não encontrado."}</div>
     );
   }
 
   return (
     <div className="player-page">
       <div className="player-backdrop">
-        <img
-          src={movie.cover || movie.backdrop}
-          alt={movie.title}
-        />
+        <img src={movie.cover || movie.backdrop} alt={movie.title} />
       </div>
 
       <div className="player-gradient" />
 
       <div className="player-topbar">
-        <Link
-          to="/"
-          className="player-back-button"
-        >
+        <Link to="/" className="player-back-button">
           <ArrowLeft size={20} />
           Voltar
         </Link>
@@ -658,51 +557,36 @@ export default function Player() {
       <div className="player-content">
         <div className="player-video-section">
           {isYoutube(movie) ? (
-            <YoutubePlayer
-              movie={movie}
-              iframeRef={iframeRef}
-            />
+            <YoutubePlayer movie={movie} iframeRef={iframeRef} />
           ) : (
             <div className="video-shell">
               <video
-                key={`${movie._id}-${streamUrl}`}
+                // IMPORTANTE:
+                // A chave não depende mais da URL.
+                //
+                // O recovery pode atualizar o src
+                // sem desmontar o elemento <video>.
+                //
+                // Isso ajuda a preservar o fullscreen
+                // durante as reconexões.
+                key={movie._id}
                 ref={videoRef}
                 src={streamUrl}
                 controls
                 preload="metadata"
                 playsInline
                 className="modern-video"
-                onLoadedMetadata={
-                  handleLoadedMetadata
-                }
+                onLoadedMetadata={handleLoadedMetadata}
                 onCanPlay={handleCanPlay}
-                onTimeUpdate={
-                  handleVideoTimeUpdate
-                }
-                onSeeking={
-                  handleVideoSeeking
-                }
-                onSeeked={
-                  handleVideoSeeked
-                }
-                onPause={
-                  handleVideoPause
-                }
-                onWaiting={
-                  handleWaiting
-                }
-                onStalled={
-                  handleStalled
-                }
-                onPlaying={
-                  handlePlaying
-                }
-                onError={
-                  handleError
-                }
-                onEnded={
-                  handleVideoEnded
-                }
+                onTimeUpdate={handleVideoTimeUpdate}
+                onSeeking={handleVideoSeeking}
+                onSeeked={handleVideoSeeked}
+                onPause={handleVideoPause}
+                onWaiting={handleWaiting}
+                onStalled={handleStalled}
+                onPlaying={handlePlaying}
+                onError={handleError}
+                onEnded={handleVideoEnded}
               />
             </div>
           )}
@@ -710,13 +594,9 @@ export default function Player() {
           {!isYoutube(movie) && (
             <div className="player-progress-wrapper">
               <div className="player-progress-labels">
-                <span>
-                  Continuar assistindo
-                </span>
+                <span>Continuar assistindo</span>
 
-                <span>
-                  {Math.floor(progress)}%
-                </span>
+                <span>{Math.floor(progress)}%</span>
               </div>
 
               <div className="player-progress-bar">
@@ -746,8 +626,7 @@ export default function Player() {
 
                 <span>
                   <Eye size={16} />
-                  {formatViews(movie.views)}{" "}
-                  views
+                  {formatViews(movie.views)} views
                 </span>
 
                 {!isYoutube(movie) && (
@@ -768,22 +647,13 @@ export default function Player() {
                       : "Adicionar aos favoritos"
                   }
                 >
-                  <Heart
-                    size={20}
-                    fill={
-                      favorite
-                        ? "red"
-                        : "none"
-                    }
-                  />
+                  <Heart size={20} fill={favorite ? "red" : "none"} />
                 </button>
               </div>
             </div>
           </div>
 
-          <p className="player-description">
-            {movie.overview}
-          </p>
+          <p className="player-description">{movie.overview}</p>
 
           <div className="player-actions">
             <button
@@ -793,15 +663,10 @@ export default function Player() {
             >
               <Play size={18} />
 
-              {isYoutube(movie)
-                ? "Ir para o vídeo"
-                : "Assistir agora"}
+              {isYoutube(movie) ? "Ir para o vídeo" : "Assistir agora"}
             </button>
 
-            <button
-              type="button"
-              className="secondary-button"
-            >
+            <button type="button" className="secondary-button">
               <Volume2 size={18} />
               Trailer
             </button>
