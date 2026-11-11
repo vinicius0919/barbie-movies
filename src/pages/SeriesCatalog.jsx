@@ -1,13 +1,17 @@
+
 import "./SeriesCatalog.css";
 
 import { useEffect, useMemo, useState } from "react";
-
 import { useNavigate } from "react-router-dom";
+import {
+  Search,
+  Play,
+  Tv,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 
-import { Search, Play, Tv, AlertCircle, Loader2 } from "lucide-react";
-
-import { getSeries } from "../services/series";
-
+import { getSeriesCatalog } from "../services/series";
 import SeriesCard from "../components/SeriesCard";
 
 export default function SeriesCatalog() {
@@ -28,27 +32,42 @@ export default function SeriesCatalog() {
         setLoading(true);
         setError("");
 
-        const data = await getSeries();
+        // Endpoint público de séries publicadas.
+        const data = await getSeriesCatalog();
 
-        if (active) {
-          setSeriesList(
-            Array.isArray(data)
-              ? data.filter((series) => series.published === true)
-              : [],
+        if (!active) return;
+
+        if (!Array.isArray(data)) {
+          throw new Error(
+            "Formato de resposta inválido para o catálogo."
           );
         }
+
+        // Defesa adicional no frontend.
+        // A filtragem obrigatória deve ocorrer no backend.
+        setSeriesList(
+          data.filter((series) => series.published === true)
+        );
       } catch (err) {
-        if (active) {
-          setError(
-            err.response?.data?.error || "Não foi possível carregar as séries.",
-          );
-        }
+        if (!active) return;
+
+        console.error(
+          "[MiqFlix] Erro ao carregar catálogo de séries",
+          err
+        );
+
+        setError(
+          err.response?.data?.error ||
+            "Não foi possível carregar as séries."
+        );
       } finally {
-        if (active) setLoading(false);
+        if (active) {
+          setLoading(false);
+        }
       }
     }
 
-    loadSeries();
+    void loadSeries();
 
     return () => {
       active = false;
@@ -57,7 +76,7 @@ export default function SeriesCatalog() {
 
   const genres = useMemo(() => {
     const values = seriesList.flatMap((series) =>
-      Array.isArray(series.genres) ? series.genres : [],
+      Array.isArray(series.genres) ? series.genres : []
     );
 
     return ["Todos", ...new Set(values.filter(Boolean))];
@@ -67,20 +86,25 @@ export default function SeriesCatalog() {
     const term = search.trim().toLocaleLowerCase("pt-BR");
 
     return seriesList.filter((series) => {
-      const matchesSearch =
-        !term || series.title?.toLocaleLowerCase("pt-BR").includes(term);
+      const title = String(series.title || "")
+        .toLocaleLowerCase("pt-BR");
 
-      const matchesGenre = genre === "Todos" || series.genres?.includes(genre);
+      const matchesSearch = !term || title.includes(term);
+
+      const matchesGenre =
+        genre === "Todos" ||
+        (Array.isArray(series.genres) &&
+          series.genres.includes(genre));
 
       return matchesSearch && matchesGenre;
     });
   }, [seriesList, search, genre]);
 
-  const featuredSeries = seriesList[0];
+  const featuredSeries = seriesList[0] || null;
 
   return (
     <main className="series-catalog">
-      {!loading && featuredSeries && (
+      {!loading && !error && featuredSeries && (
         <section
           className="series-catalog-hero"
           style={{
@@ -91,7 +115,7 @@ export default function SeriesCatalog() {
                 rgba(10,10,15,.65),
                 rgba(10,10,15,.2)
               ),
-              url("${featuredSeries.backdrop || featuredSeries.poster}")
+              url("${featuredSeries.backdrop || featuredSeries.poster || ""}")
             `,
           }}
         >
@@ -105,6 +129,7 @@ export default function SeriesCatalog() {
 
             <div className="series-catalog-hero-meta">
               <span>{featuredSeries.year}</span>
+
               <span>
                 {featuredSeries.totalSeasons ??
                   featuredSeries.seasons?.length ??
@@ -117,7 +142,9 @@ export default function SeriesCatalog() {
 
             <button
               type="button"
-              onClick={() => navigate(`/series/${featuredSeries._id}`)}
+              onClick={() =>
+                navigate(`/series/${featuredSeries._id}`)
+              }
             >
               <Play size={18} fill="currentColor" />
               Ver série
@@ -129,23 +156,32 @@ export default function SeriesCatalog() {
       <div className="series-catalog-container">
         <header className="series-catalog-header">
           <div>
-            <span className="series-catalog-label">MIQFLIX</span>
+            <span className="series-catalog-label">
+              MIQFLIX
+            </span>
+
             <h2>Explorar séries</h2>
-            <p>Descubra histórias e escolha sua próxima maratona.</p>
+
+            <p>
+              Descubra histórias e escolha sua próxima maratona.
+            </p>
           </div>
 
           <label className="series-catalog-search">
             <Search size={19} />
+
             <input
               type="search"
               placeholder="Buscar séries..."
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) =>
+                setSearch(event.target.value)
+              }
             />
           </label>
         </header>
 
-        {!loading && genres.length > 1 && (
+        {!loading && !error && genres.length > 1 && (
           <div className="series-catalog-genres">
             {genres.map((item) => (
               <button
@@ -162,17 +198,24 @@ export default function SeriesCatalog() {
 
         {loading ? (
           <div className="series-catalog-feedback">
-            <Loader2 size={32} className="series-catalog-spin" />
+            <Loader2
+              size={32}
+              className="series-catalog-spin"
+            />
             <p>Carregando catálogo...</p>
           </div>
         ) : error ? (
-          <div className="series-catalog-feedback" role="alert">
+          <div
+            className="series-catalog-feedback"
+            role="alert"
+          >
             <AlertCircle size={30} />
             <p>{error}</p>
           </div>
         ) : filteredSeries.length === 0 ? (
           <div className="series-catalog-feedback">
             <Tv size={32} />
+
             <p>
               {seriesList.length === 0
                 ? "Nenhuma série disponível no momento."
@@ -182,17 +225,26 @@ export default function SeriesCatalog() {
         ) : (
           <>
             <div className="series-catalog-results">
-              <h3>{genre === "Todos" ? "Todas as séries" : genre}</h3>
+              <h3>
+                {genre === "Todos"
+                  ? "Todas as séries"
+                  : genre}
+              </h3>
 
               <span>
                 {filteredSeries.length}{" "}
-                {filteredSeries.length === 1 ? "série" : "séries"}
+                {filteredSeries.length === 1
+                  ? "série"
+                  : "séries"}
               </span>
             </div>
 
             <div className="series-catalog-grid">
               {filteredSeries.map((series) => (
-                <SeriesCard key={series._id} series={series} />
+                <SeriesCard
+                  key={series._id}
+                  series={series}
+                />
               ))}
             </div>
           </>
