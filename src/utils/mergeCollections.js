@@ -59,19 +59,33 @@ function getPosters(items, coverUrl) {
 }
 
 function makeManualCollection(config, mediaIndex) {
-  const items = [];
-  const seen = new Set();
+  let items = [];
 
-  for (const reference of config.items || []) {
-    const key =
-      `${reference.mediaType}:${reference.mediaId}`;
+  // A API pública já resolveu os filmes e séries.
+  if (Array.isArray(config.resolvedItems)) {
+    items = config.resolvedItems
+      .map((item) =>
+        normalizeMedia(item, item.mediaType)
+      )
+      .filter(Boolean);
+  } else {
+    // Compatibilidade com o painel administrativo,
+    // que trabalha com referências salvas.
+    const seen = new Set();
 
-    if (seen.has(key)) continue;
-    seen.add(key);
+    for (const reference of config.items || []) {
+      const key =
+        `${reference.mediaType}:${reference.mediaId}`;
 
-    const item = mediaIndex.get(key);
+      if (seen.has(key)) continue;
+      seen.add(key);
 
-    if (item) items.push(item);
+      const item = mediaIndex.get(key);
+
+      if (item) {
+        items.push(item);
+      }
+    }
   }
 
   const movieCount = items.filter(
