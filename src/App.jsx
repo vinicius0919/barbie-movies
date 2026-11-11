@@ -10,6 +10,8 @@ import SubscriptionRoute from "./components/SubscriptionRoute";
 import Home from "./pages/Home";
 import Player from "./pages/Player";
 import Favorites from "./pages/Favorites";
+import CollectionsPage from "./pages/CollectionsPage";
+import CollectionDetailsPage from "./pages/CollectionDetailsPage";
 
 // Séries
 import SeriesCatalog from "./pages/SeriesCatalog";
@@ -44,6 +46,10 @@ export default function App() {
           <Route path="/subscription" element={<SubscriptionPage />} />
 
           <Route path="/series" element={<SeriesCatalog />} />
+
+          <Route path="/collections" element={<CollectionsPage />} />
+
+          <Route path="/collections/:id" element={<CollectionDetailsPage />} />
           {/* ================================
               ROTAS AUTENTICADAS
           ================================= */}
@@ -59,7 +65,6 @@ export default function App() {
 
             <Route element={<SubscriptionRoute />}>
               <Route path="/movie/:id" element={<Player />} />
-
 
               <Route path="/series/:id" element={<SeriesDetails />} />
             </Route>
