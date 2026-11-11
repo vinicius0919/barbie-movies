@@ -27,6 +27,7 @@ import SubscriptionPage from "./pages/SubscriptionPage";
 import CheckoutReturn from "./pages/CheckoutReturn";
 
 import "./App.css";
+import AdminCollectionsPage from "./pages/AdminCollectionsPage";
 
 export default function App() {
   return (
