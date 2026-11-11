@@ -77,6 +77,26 @@ export async function getCollectionsCatalog() {
   };
 }
 
+export async function getAdminCollectionsMedia() {
+  const { data } = await api.get(
+    `${COLLECTIONS_URL}/admin/media`
+  );
+
+  if (
+    !Array.isArray(data?.movies) ||
+    !Array.isArray(data?.series)
+  ) {
+    throw new Error(
+      "A API retornou um catálogo administrativo inválido."
+    );
+  }
+
+  return {
+    movies: data.movies,
+    series: data.series,
+  };
+}
+
 export async function getPublicCollectionConfigs() {
   const { data } = await api.get(COLLECTIONS_URL);
   return extractItems(data, ["collections"]);

@@ -1,11 +1,6 @@
-
 import "./AdminCollectionsPage.css";
 
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   Layers3,
@@ -26,6 +21,7 @@ import {
   createCollection,
   updateCollection,
   deleteCollection,
+  getAdminCollectionsMedia,
 } from "../services/collections";
 
 import { buildCollections } from "../utils/buildCollections";
@@ -73,43 +69,52 @@ export default function AdminCollectionsPage() {
 
   const [listSearch, setListSearch] = useState("");
   const [mediaSearch, setMediaSearch] = useState("");
+  const [adminMedia, setAdminMedia] = useState({
+    movies: [],
+    series: [],
+  });
 
-  async function loadData() {
-    setLoading(true);
-    setError("");
+async function loadData() {
+  setLoading(true);
+  setError("");
 
-    try {
-      const [catalogData, savedConfigs] =
-        await Promise.all([
-          getCollectionsCatalog(),
-          getAdminCollectionConfigs(),
-        ]);
+  try {
+    const [
+      catalogData,
+      savedConfigs,
+      adminCatalog,
+    ] = await Promise.all([
+      getCollectionsCatalog(),
+      getAdminCollectionConfigs(),
+      getAdminCollectionsMedia(),
+    ]);
 
-      setCatalog({
-        movies: catalogData.movies,
-        series: catalogData.series,
-      });
+    setCatalog({
+      movies: catalogData.movies,
+      series: catalogData.series,
+    });
 
-      setWarnings(catalogData.warnings);
-      setConfigs(savedConfigs);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
+    setAdminMedia({
+      movies: adminCatalog.movies,
+      series: adminCatalog.series,
+    });
+
+    setWarnings(catalogData.warnings);
+    setConfigs(savedConfigs);
+  } catch (err) {
+    setError(getErrorMessage(err));
+  } finally {
+    setLoading(false);
   }
+}
 
   useEffect(() => {
     void loadData();
   }, []);
 
   const automaticCollections = useMemo(
-    () =>
-      buildCollections(
-        catalog.movies,
-        catalog.series
-      ),
-    [catalog]
+    () => buildCollections(catalog.movies, catalog.series),
+    [catalog],
   );
 
   const collections = useMemo(
@@ -119,85 +124,71 @@ export default function AdminCollectionsPage() {
         configs,
         catalog.movies,
         catalog.series,
-        { includeUnpublished: true }
+        { includeUnpublished: true },
       ),
-    [automaticCollections, configs, catalog]
+    [automaticCollections, configs, catalog],
   );
 
   const filteredCollections = useMemo(() => {
-    const query = listSearch
-      .trim()
-      .toLocaleLowerCase("pt-BR");
+    const query = listSearch.trim().toLocaleLowerCase("pt-BR");
 
     return collections.filter((collection) =>
-      collection.title
-        .toLocaleLowerCase("pt-BR")
-        .includes(query)
+      collection.title.toLocaleLowerCase("pt-BR").includes(query),
     );
   }, [collections, listSearch]);
 
-  const mediaOptions = useMemo(() => {
-    const movies = catalog.movies.map((item) => ({
+
+const mediaOptions = useMemo(() => {
+  const movies = adminMedia.movies
+    .map((item) => ({
       ...item,
-      _id: String(item._id ?? item.id),
+      _id: String(item._id ?? item.id ?? ""),
       mediaType: "movie",
     }));
 
-    const series = catalog.series.map((item) => ({
+  const series = adminMedia.series
+    .map((item) => ({
       ...item,
-      _id: String(item._id ?? item.id),
+      _id: String(item._id ?? item.id ?? ""),
       mediaType: "series",
     }));
 
-    return [...movies, ...series].filter(
-      (item) =>
-        item._id &&
-        item.title &&
-        item.published !== false
+  return [...movies, ...series]
+    .filter((item) => item._id && item.title)
+    .sort((a, b) =>
+      a.title.localeCompare(b.title, "pt-BR")
     );
-  }, [catalog]);
+}, [adminMedia]);
+
 
   const mediaIndex = useMemo(
     () =>
       new Map(
-        mediaOptions.map((item) => [
-          `${item.mediaType}:${item._id}`,
-          item,
-        ])
+        mediaOptions.map((item) => [`${item.mediaType}:${item._id}`, item]),
       ),
-    [mediaOptions]
+    [mediaOptions],
   );
 
   const availableMedia = useMemo(() => {
-    const query = mediaSearch
-      .trim()
-      .toLocaleLowerCase("pt-BR");
+    const query = mediaSearch.trim().toLocaleLowerCase("pt-BR");
 
     const selected = new Set(
-      form.items.map(
-        (item) =>
-          `${item.mediaType}:${item.mediaId}`
-      )
+      form.items.map((item) => `${item.mediaType}:${item.mediaId}`),
     );
 
     return mediaOptions
       .filter((item) => {
-        const key =
-          `${item.mediaType}:${item._id}`;
+        const key = `${item.mediaType}:${item._id}`;
 
         return (
           !selected.has(key) &&
-          item.title
-            .toLocaleLowerCase("pt-BR")
-            .includes(query)
+          item.title.toLocaleLowerCase("pt-BR").includes(query)
         );
       })
-      .slice(0, 12);
+      .slice(0, 50);
   }, [mediaOptions, mediaSearch, form.items]);
 
-  const hasSavedConfig = configs.some(
-    (config) => config.id === selectedId
-  );
+  const hasSavedConfig = configs.some((config) => config.id === selectedId);
 
   function updateField(field, value) {
     setForm((previous) => ({
@@ -218,9 +209,7 @@ export default function AdminCollectionsPage() {
   }
 
   function selectCollection(collection) {
-    const saved = configs.find(
-      (item) => item.id === collection.id
-    );
+    const saved = configs.find((item) => item.id === collection.id);
 
     setSelectedId(collection.id);
 
@@ -252,7 +241,7 @@ export default function AdminCollectionsPage() {
       const exists = previous.items.some(
         (reference) =>
           reference.mediaType === item.mediaType &&
-          reference.mediaId === item._id
+          reference.mediaId === item._id,
       );
 
       if (exists) return previous;
@@ -273,9 +262,7 @@ export default function AdminCollectionsPage() {
   function removeMedia(index) {
     setForm((previous) => ({
       ...previous,
-      items: previous.items.filter(
-        (_, itemIndex) => itemIndex !== index
-      ),
+      items: previous.items.filter((_, itemIndex) => itemIndex !== index),
     }));
   }
 
@@ -283,19 +270,13 @@ export default function AdminCollectionsPage() {
     setForm((previous) => {
       const nextIndex = index + direction;
 
-      if (
-        nextIndex < 0 ||
-        nextIndex >= previous.items.length
-      ) {
+      if (nextIndex < 0 || nextIndex >= previous.items.length) {
         return previous;
       }
 
       const items = [...previous.items];
 
-      [items[index], items[nextIndex]] = [
-        items[nextIndex],
-        items[index],
-      ];
+      [items[index], items[nextIndex]] = [items[nextIndex], items[index]];
 
       return {
         ...previous,
@@ -317,14 +298,8 @@ export default function AdminCollectionsPage() {
       return;
     }
 
-    if (
-      form.type === "manual" &&
-      form.published &&
-      form.items.length === 0
-    ) {
-      setError(
-        "Adicione pelo menos um título antes de publicar."
-      );
+    if (form.type === "manual" && form.published && form.items.length === 0) {
+      setError("Adicione pelo menos um título antes de publicar.");
       return;
     }
 
@@ -349,10 +324,7 @@ export default function AdminCollectionsPage() {
       const saved =
         selectedId === "new"
           ? await createCollection(payload)
-          : await updateCollection(
-              selectedId,
-              payload
-            );
+          : await updateCollection(selectedId, payload);
 
       setSelectedId(saved.id);
       await loadData();
@@ -366,11 +338,7 @@ export default function AdminCollectionsPage() {
   }
 
   async function handleDelete() {
-    if (
-      saving ||
-      selectedId === "new" ||
-      !hasSavedConfig
-    ) {
+    if (saving || selectedId === "new" || !hasSavedConfig) {
       return;
     }
 
@@ -379,7 +347,7 @@ export default function AdminCollectionsPage() {
     const confirmed = window.confirm(
       restoring
         ? "Restaurar as configurações originais desta coleção?"
-        : "Excluir esta coleção? Os filmes e séries não serão apagados."
+        : "Excluir esta coleção? Os filmes e séries não serão apagados.",
     );
 
     if (!confirmed) return;
@@ -397,7 +365,7 @@ export default function AdminCollectionsPage() {
       setMessage(
         restoring
           ? "Configurações originais restauradas."
-          : "Coleção excluída com sucesso."
+          : "Coleção excluída com sucesso.",
       );
     } catch (err) {
       setError(getErrorMessage(err));
@@ -418,8 +386,8 @@ export default function AdminCollectionsPage() {
           <h1>Gerenciar coleções</h1>
 
           <p>
-            Organize filmes e séries e personalize
-            as coleções disponíveis no MiqFlix.
+            Organize filmes e séries e personalize as coleções disponíveis no
+            MiqFlix.
           </p>
         </div>
 
@@ -434,27 +402,19 @@ export default function AdminCollectionsPage() {
       </header>
 
       {error && (
-        <div
-          className="admin-collections-alert error"
-          role="alert"
-        >
+        <div className="admin-collections-alert error" role="alert">
           {error}
         </div>
       )}
 
       {message && (
-        <div
-          className="admin-collections-alert success"
-          role="status"
-        >
+        <div className="admin-collections-alert success" role="status">
           {message}
         </div>
       )}
 
       {warnings.length > 0 && (
-        <div className="admin-collections-alert">
-          {warnings.join(" ")}
-        </div>
+        <div className="admin-collections-alert">{warnings.join(" ")}</div>
       )}
 
       {loading && (
@@ -479,9 +439,7 @@ export default function AdminCollectionsPage() {
                 type="search"
                 placeholder="Buscar coleção..."
                 value={listSearch}
-                onChange={(event) =>
-                  setListSearch(event.target.value)
-                }
+                onChange={(event) => setListSearch(event.target.value)}
               />
             </label>
 
@@ -492,13 +450,9 @@ export default function AdminCollectionsPage() {
                   type="button"
                   className={
                     "admin-collections-list-item " +
-                    (selectedId === collection.id
-                      ? "selected"
-                      : "")
+                    (selectedId === collection.id ? "selected" : "")
                   }
-                  onClick={() =>
-                    selectCollection(collection)
-                  }
+                  onClick={() => selectCollection(collection)}
                 >
                   <span className="admin-collections-list-icon">
                     {collection.type === "genre" ? (
@@ -512,9 +466,7 @@ export default function AdminCollectionsPage() {
                     <strong>{collection.title}</strong>
 
                     <small>
-                      {collection.type === "genre"
-                        ? "Automática"
-                        : "Manual"}
+                      {collection.type === "genre" ? "Automática" : "Manual"}
                       {" · "}
                       {collection.total} títulos
                     </small>
@@ -523,15 +475,9 @@ export default function AdminCollectionsPage() {
                   <span
                     className={
                       "admin-collections-status " +
-                      (collection.published
-                        ? "published"
-                        : "draft")
+                      (collection.published ? "published" : "draft")
                     }
-                    title={
-                      collection.published
-                        ? "Publicada"
-                        : "Oculta"
-                    }
+                    title={collection.published ? "Publicada" : "Oculta"}
                   />
                 </button>
               ))}
@@ -549,9 +495,7 @@ export default function AdminCollectionsPage() {
               <div className="admin-collections-editor-heading">
                 <div>
                   <h2>
-                    {selectedId === "new"
-                      ? "Nova coleção"
-                      : "Editar coleção"}
+                    {selectedId === "new" ? "Nova coleção" : "Editar coleção"}
                   </h2>
 
                   <p>
@@ -562,9 +506,7 @@ export default function AdminCollectionsPage() {
                 </div>
 
                 <span className="admin-collections-type">
-                  {form.type === "genre"
-                    ? "Automática"
-                    : "Manual"}
+                  {form.type === "genre" ? "Automática" : "Manual"}
                 </span>
               </div>
 
@@ -576,10 +518,7 @@ export default function AdminCollectionsPage() {
                     maxLength={120}
                     value={form.title}
                     onChange={(event) =>
-                      updateField(
-                        "title",
-                        event.target.value
-                      )
+                      updateField("title", event.target.value)
                     }
                     placeholder="Nome da coleção"
                   />
@@ -592,10 +531,7 @@ export default function AdminCollectionsPage() {
                     rows={3}
                     value={form.description}
                     onChange={(event) =>
-                      updateField(
-                        "description",
-                        event.target.value
-                      )
+                      updateField("description", event.target.value)
                     }
                     placeholder="Descreva esta coleção..."
                   />
@@ -607,24 +543,17 @@ export default function AdminCollectionsPage() {
                     type="url"
                     value={form.coverUrl}
                     onChange={(event) =>
-                      updateField(
-                        "coverUrl",
-                        event.target.value
-                      )
+                      updateField("coverUrl", event.target.value)
                     }
                     placeholder="https://..."
                   />
                 </label>
 
-                {form.coverUrl &&
-                  /^https:\/\//i.test(form.coverUrl) && (
-                    <div className="admin-collections-cover">
-                      <img
-                        src={form.coverUrl}
-                        alt="Prévia da capa"
-                      />
-                    </div>
-                  )}
+                {form.coverUrl && /^https:\/\//i.test(form.coverUrl) && (
+                  <div className="admin-collections-cover">
+                    <img src={form.coverUrl} alt="Prévia da capa" />
+                  </div>
+                )}
 
                 <label>
                   Ordem de exibição
@@ -635,10 +564,7 @@ export default function AdminCollectionsPage() {
                     step="1"
                     value={form.sortOrder}
                     onChange={(event) =>
-                      updateField(
-                        "sortOrder",
-                        event.target.value
-                      )
+                      updateField("sortOrder", event.target.value)
                     }
                   />
                 </label>
@@ -650,10 +576,7 @@ export default function AdminCollectionsPage() {
                     type="checkbox"
                     checked={form.published}
                     onChange={(event) =>
-                      updateField(
-                        "published",
-                        event.target.checked
-                      )
+                      updateField("published", event.target.checked)
                     }
                   />
                   Coleção publicada
@@ -664,10 +587,7 @@ export default function AdminCollectionsPage() {
                     type="checkbox"
                     checked={form.featured}
                     onChange={(event) =>
-                      updateField(
-                        "featured",
-                        event.target.checked
-                      )
+                      updateField("featured", event.target.checked)
                     }
                   />
                   Destacar coleção
@@ -679,14 +599,12 @@ export default function AdminCollectionsPage() {
                   <h3>Regra automática</h3>
 
                   <p>
-                    Os conteúdos são selecionados
-                    automaticamente pelo gênero:
+                    Os conteúdos são selecionados automaticamente pelo gênero:
                     <strong> {form.genre}</strong>.
                   </p>
 
                   <p>
-                    Novos títulos desse gênero serão
-                    incluídos automaticamente.
+                    Novos títulos desse gênero serão incluídos automaticamente.
                   </p>
                 </div>
               ) : (
@@ -694,15 +612,13 @@ export default function AdminCollectionsPage() {
                   <div className="admin-collections-section-heading">
                     <h3>Conteúdos selecionados</h3>
 
-                    <span>
-                      {form.items.length} títulos
-                    </span>
+                    <span>{form.items.length} títulos</span>
                   </div>
 
                   <div className="admin-collections-selected">
                     {form.items.map((reference, index) => {
                       const item = mediaIndex.get(
-                        `${reference.mediaType}:${reference.mediaId}`
+                        `${reference.mediaType}:${reference.mediaId}`,
                       );
 
                       return (
@@ -720,8 +636,7 @@ export default function AdminCollectionsPage() {
 
                           <div className="admin-collections-media-info">
                             <strong>
-                              {item?.title ||
-                                "Título indisponível"}
+                              {item?.title || "Título indisponível"}
                             </strong>
 
                             <small>
@@ -735,9 +650,7 @@ export default function AdminCollectionsPage() {
                             type="button"
                             title="Mover para cima"
                             disabled={index === 0}
-                            onClick={() =>
-                              moveMedia(index, -1)
-                            }
+                            onClick={() => moveMedia(index, -1)}
                           >
                             <ArrowUp size={17} />
                           </button>
@@ -745,13 +658,8 @@ export default function AdminCollectionsPage() {
                           <button
                             type="button"
                             title="Mover para baixo"
-                            disabled={
-                              index ===
-                              form.items.length - 1
-                            }
-                            onClick={() =>
-                              moveMedia(index, 1)
-                            }
+                            disabled={index === form.items.length - 1}
+                            onClick={() => moveMedia(index, 1)}
                           >
                             <ArrowDown size={17} />
                           </button>
@@ -759,9 +667,7 @@ export default function AdminCollectionsPage() {
                           <button
                             type="button"
                             title="Remover título"
-                            onClick={() =>
-                              removeMedia(index)
-                            }
+                            onClick={() => removeMedia(index)}
                           >
                             <Trash2 size={17} />
                           </button>
@@ -785,9 +691,7 @@ export default function AdminCollectionsPage() {
                       type="search"
                       placeholder="Pesquisar no catálogo..."
                       value={mediaSearch}
-                      onChange={(event) =>
-                        setMediaSearch(event.target.value)
-                      }
+                      onChange={(event) => setMediaSearch(event.target.value)}
                     />
                   </label>
 
@@ -809,9 +713,7 @@ export default function AdminCollectionsPage() {
                           <strong>{item.title}</strong>
 
                           <small>
-                            {item.mediaType === "movie"
-                              ? "Filme"
-                              : "Série"}
+                            {item.mediaType === "movie" ? "Filme" : "Série"}
                           </small>
                         </div>
 
@@ -842,26 +744,21 @@ export default function AdminCollectionsPage() {
                 >
                   <Save size={18} />
 
-                  {saving
-                    ? "Salvando..."
-                    : "Salvar coleção"}
+                  {saving ? "Salvando..." : "Salvar coleção"}
                 </button>
 
-                {selectedId !== "new" &&
-                  hasSavedConfig && (
-                    <button
-                      type="button"
-                      className="admin-collections-danger"
-                      disabled={saving}
-                      onClick={handleDelete}
-                    >
-                      <Trash2 size={17} />
+                {selectedId !== "new" && hasSavedConfig && (
+                  <button
+                    type="button"
+                    className="admin-collections-danger"
+                    disabled={saving}
+                    onClick={handleDelete}
+                  >
+                    <Trash2 size={17} />
 
-                      {form.type === "genre"
-                        ? "Restaurar padrão"
-                        : "Excluir"}
-                    </button>
-                  )}
+                    {form.type === "genre" ? "Restaurar padrão" : "Excluir"}
+                  </button>
+                )}
               </div>
             </form>
           </section>
