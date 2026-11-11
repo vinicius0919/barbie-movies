@@ -1,4 +1,3 @@
-
 import api from "./api";
 import { getSeriesCatalog } from "./series";
 
@@ -24,9 +23,7 @@ function extractItems(data, keys = []) {
   const result = candidates.find(Array.isArray);
 
   if (!result) {
-    throw new Error(
-      "A API retornou um formato de catálogo inesperado."
-    );
+    throw new Error("A API retornou um formato de catálogo inesperado.");
   }
 
   return result;
@@ -44,46 +41,33 @@ export async function getPublicSeries() {
 }
 
 export async function getCollectionsCatalog() {
-  const [moviesResult, seriesResult] =
-    await Promise.allSettled([
-      getPublicMovies(),
-      getPublicSeries(),
-    ]);
+  const [moviesResult, seriesResult] = await Promise.allSettled([
+    getPublicMovies(),
+    getPublicSeries(),
+  ]);
 
-  const moviesOk =
-    moviesResult.status === "fulfilled";
+  const moviesOk = moviesResult.status === "fulfilled";
 
-  const seriesOk =
-    seriesResult.status === "fulfilled";
+  const seriesOk = seriesResult.status === "fulfilled";
 
   if (!moviesOk && !seriesOk) {
     throw new Error(
-      "Não foi possível carregar os catálogos de filmes e séries."
+      "Não foi possível carregar os catálogos de filmes e séries.",
     );
   }
 
   const warnings = [];
 
   if (!moviesOk) {
-    console.error(
-      "[Collections] Filmes:",
-      moviesResult.reason
-    );
+    console.error("[Collections] Filmes:", moviesResult.reason);
 
-    warnings.push(
-      "Não foi possível carregar os filmes."
-    );
+    warnings.push("Não foi possível carregar os filmes.");
   }
 
   if (!seriesOk) {
-    console.error(
-      "[Collections] Séries:",
-      seriesResult.reason
-    );
+    console.error("[Collections] Séries:", seriesResult.reason);
 
-    warnings.push(
-      "Não foi possível carregar as séries."
-    );
+    warnings.push("Não foi possível carregar as séries.");
   }
 
   return {
@@ -98,11 +82,14 @@ export async function getPublicCollectionConfigs() {
   return extractItems(data, ["collections"]);
 }
 
+export async function getAdminCollectionConfigs() {
+  const { data } = await api.get(`${COLLECTIONS_URL}/admin`);
+
+  return extractItems(data, ["collections"]);
+}
+
 export async function createCollection(payload) {
-  const { data } = await api.post(
-    COLLECTIONS_URL,
-    payload
-  );
+  const { data } = await api.post(COLLECTIONS_URL, payload);
 
   return data;
 }
@@ -110,7 +97,7 @@ export async function createCollection(payload) {
 export async function updateCollection(id, payload) {
   const { data } = await api.put(
     `${COLLECTIONS_URL}/${encodeURIComponent(id)}`,
-    payload
+    payload,
   );
 
   return data;
@@ -118,7 +105,7 @@ export async function updateCollection(id, payload) {
 
 export async function deleteCollection(id) {
   const { data } = await api.delete(
-    `${COLLECTIONS_URL}/${encodeURIComponent(id)}`
+    `${COLLECTIONS_URL}/${encodeURIComponent(id)}`,
   );
 
   return data;
