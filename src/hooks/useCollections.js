@@ -6,23 +6,59 @@ import {
 } from "react";
 
 import {
-  getCollectionsCatalog,
   getPublicCollectionConfigs,
 } from "../services/collections";
 
-import { buildCollections } from "../utils/buildCollections";
-import { mergeCollections } from "../utils/mergeCollections";
+function normalizeCollection(collection) {
+  const items = Array.isArray(collection.resolvedItems)
+    ? collection.resolvedItems.map((item) => ({
+        ...item,
+        _id: String(item._id),
+      }))
+    : [];
+
+  const movieCount = items.filter(
+    (item) => item.mediaType === "movie"
+  ).length;
+
+  const seriesCount = items.filter(
+    (item) => item.mediaType === "series"
+  ).length;
+
+  const posters = [
+    collection.coverUrl,
+    ...items.map((item) => item.poster),
+  ]
+    .filter(
+      (url) =>
+        typeof url === "string" &&
+        /^https?:\/\//i.test(url)
+    )
+    .filter(
+      (url, index, list) =>
+        list.indexOf(url) === index
+    )
+    .slice(0, 3);
+
+  return {
+    id: collection.id,
+    title: collection.title,
+    description: collection.description || "",
+    coverUrl: collection.coverUrl || "",
+    featured: collection.featured === true,
+    sortOrder: collection.sortOrder ?? 100,
+    items,
+    total: items.length,
+    movieCount,
+    seriesCount,
+    posters,
+  };
+}
 
 export function useCollections() {
-  const [catalog, setCatalog] = useState({
-    movies: [],
-    series: [],
-  });
-
-  const [configs, setConfigs] = useState([]);
+  const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [warnings, setWarnings] = useState([]);
   const [requestVersion, setRequestVersion] =
     useState(0);
 
@@ -32,29 +68,19 @@ export function useCollections() {
     async function load() {
       setLoading(true);
       setError("");
-      setWarnings([]);
 
       try {
-        const [catalogData, savedConfigs] =
-          await Promise.all([
-            getCollectionsCatalog(),
-            getPublicCollectionConfigs(),
-          ]);
+        const result =
+          await getPublicCollectionConfigs();
 
         if (!active) return;
 
-        setCatalog({
-          movies: catalogData.movies,
-          series: catalogData.series,
-        });
-
-        setConfigs(savedConfigs);
-        setWarnings(catalogData.warnings);
+        setData(result);
       } catch (err) {
         if (!active) return;
 
         console.error(
-          "[Collections] Falha:",
+          "[Collections] Erro:",
           err
         );
 
@@ -63,12 +89,7 @@ export function useCollections() {
           "Não foi possível carregar as coleções."
         );
 
-        setCatalog({
-          movies: [],
-          series: [],
-        });
-
-        setConfigs([]);
+        setData([]);
       } finally {
         if (active) {
           setLoading(false);
@@ -83,19 +104,10 @@ export function useCollections() {
     };
   }, [requestVersion]);
 
-  const collections = useMemo(() => {
-    const automatic = buildCollections(
-      catalog.movies,
-      catalog.series
-    );
-
-    return mergeCollections(
-      automatic,
-      configs,
-      catalog.movies,
-      catalog.series
-    );
-  }, [catalog, configs]);
+  const collections = useMemo(
+    () => data.map(normalizeCollection),
+    [data]
+  );
 
   function reload() {
     setRequestVersion((value) => value + 1);
@@ -105,7 +117,7 @@ export function useCollections() {
     collections,
     loading,
     error,
-    warnings,
+    warnings: [],
     reload,
   };
 }
