@@ -14,7 +14,12 @@ import {
   Eye,
 } from "lucide-react";
 
-import { getMovie, toggleFavorite, addView } from "../services/movies";
+import {
+  getMovie,
+  getMoviePlayback,
+  toggleFavorite,
+  addView,
+} from "../services/movies";
 
 import useStreamRecovery from "../hooks/useStreamRecovery";
 
@@ -22,7 +27,7 @@ import useStreamRecovery from "../hooks/useStreamRecovery";
 // HELPERS
 // =========================================
 
-const isYoutube = (movie) => movie?.provider === "youtube";
+const isYoutube = (playback) => playback?.provider === "youtube";
 
 const formatDuration = (seconds) => {
   if (!Number.isFinite(seconds) || seconds <= 0) {
@@ -47,20 +52,47 @@ const formatViews = (views = 0) => {
   return views;
 };
 
+function getPlaybackError(error) {
+  const status = error?.response?.status;
+
+  if (status === 401) {
+    return "Faça login para assistir a este filme.";
+  }
+
+  if (status === 403) {
+    return "É necessária uma assinatura ativa para assistir.";
+  }
+
+  if (status === 404) {
+    return "Filme ou reprodução não encontrado.";
+  }
+
+  if (status === 422) {
+    return "Nenhuma fonte de reprodução disponível.";
+  }
+
+  if (status === 503) {
+    return "Não foi possível verificar sua assinatura. Tente novamente.";
+  }
+
+  return "Não foi possível preparar a reprodução.";
+}
+
 // =========================================
 // YOUTUBE PLAYER
 // =========================================
 
-function YoutubePlayer({ movie, iframeRef }) {
+function YoutubePlayer({ title, embedUrl, iframeRef }) {
   return (
     <div className="video-shell youtube-shell">
       <iframe
         ref={iframeRef}
-        src={movie.embedUrl}
-        title={movie.title}
+        src={embedUrl}
+        title={title}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowFullScreen
         className="modern-video youtube-iframe"
+        referrerPolicy="strict-origin-when-cross-origin"
       />
     </div>
   );
@@ -74,11 +106,17 @@ export default function Player() {
   const { id } = useParams();
 
   const [movie, setMovie] = useState(null);
+  const [playback, setPlayback] = useState(null);
+
   const [favorite, setFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [playbackError, setPlaybackError] = useState("");
+
+  const [youtubeRequested, setYoutubeRequested] = useState(false);
+
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
 
@@ -98,25 +136,40 @@ export default function Player() {
   const storageKey = `movie-progress-${id}`;
   const viewStorageKey = `movie-view-${id}`;
 
+  const youtube = isYoutube(playback);
+  const canPlay = Boolean(
+    playback &&
+    ((youtube && playback.embedUrl) || (!youtube && playback.streamPath)),
+  );
+
   // =========================================
   // STREAM URL
   // =========================================
 
   const sourceUrl = useMemo(() => {
-    if (!movie || isYoutube(movie)) {
+    if (!movie?._id || !playback?.streamPath || youtube) {
       return "";
     }
 
-    if (!movie.videoUrl) {
-      return "";
-    }
+    // VITE_API_URL pode ser:
+    // /api
+    // http://localhost:3001/api
+    // https://backend.exemplo.com/api
 
-    const baseUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
+    const configuredBase = import.meta.env.VITE_API_URL || "/api";
 
-    if (!baseUrl) return "";
+    const base = new URL(
+      `${configuredBase.replace(/\/+$/, "")}/`,
+      window.location.origin,
+    );
 
-    return `${baseUrl}/stream?page=` + encodeURIComponent(movie.videoUrl);
-  }, [movie?.videoUrl, movie?.provider]);
+    // A URL é construída com o ID do filme.
+    // Não utilizamos URLs arbitrárias do cliente.
+    return new URL(
+      `stream/movies/${encodeURIComponent(movie._id)}`,
+      base,
+    ).toString();
+  }, [movie?._id, playback?.streamPath, youtube]);
 
   // =========================================
   // SILENT STREAM RECOVERY
@@ -125,6 +178,7 @@ export default function Player() {
   const {
     streamUrl,
     isRecovering,
+
     handleTimeUpdate: trackStreamProgress,
     handleWaiting,
     handleStalled,
@@ -142,28 +196,31 @@ export default function Player() {
   });
 
   // =========================================
-  // LOAD MOVIE
+  // LOAD MOVIE + AUTHORIZE PLAYBACK
   // =========================================
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadMovie() {
+      setIsLoading(true);
+      setLoadError("");
+      setPlaybackError("");
+      setMovie(null);
+      setPlayback(null);
+      setYoutubeRequested(false);
+      setDuration(0);
+      setProgress(0);
+
+      hasCountedView.current = false;
+      viewInFlightRef.current = false;
+      watchedSecondsRef.current = 0;
+      lastWatchPositionRef.current = null;
+      lastSavedAtRef.current = 0;
+      initialSeekDoneRef.current = false;
+      completedRef.current = false;
+
       try {
-        setIsLoading(true);
-        setLoadError("");
-        setMovie(null);
-        setDuration(0);
-        setProgress(0);
-
-        hasCountedView.current = false;
-        viewInFlightRef.current = false;
-        watchedSecondsRef.current = 0;
-        lastWatchPositionRef.current = null;
-        lastSavedAtRef.current = 0;
-        initialSeekDoneRef.current = false;
-        completedRef.current = false;
-
         const data = await getMovie(id);
 
         if (cancelled) return;
@@ -175,6 +232,31 @@ export default function Player() {
 
         setMovie(data);
         setFavorite(Boolean(data.favorite));
+
+        // A reprodução exige autorização.
+        // Os metadados continuam visíveis
+        // mesmo quando a assinatura é negada.
+        try {
+          const authorizedPlayback = await getMoviePlayback(id);
+
+          if (cancelled) return;
+
+          if (
+            !authorizedPlayback ||
+            !["youtube", "native"].includes(authorizedPlayback.provider)
+          ) {
+            setPlaybackError("Resposta de reprodução inválida.");
+            return;
+          }
+
+          setPlayback(authorizedPlayback);
+        } catch (error) {
+          if (cancelled) return;
+
+          console.error("[MiqFlix] Falha ao autorizar playback", error);
+
+          setPlaybackError(getPlaybackError(error));
+        }
       } catch (error) {
         if (cancelled) return;
 
@@ -188,7 +270,7 @@ export default function Player() {
       }
     }
 
-    loadMovie();
+    void loadMovie();
 
     return () => {
       cancelled = true;
@@ -353,8 +435,6 @@ export default function Player() {
       }
     }
 
-    // Restaura a posição específica do recovery,
-    // quando houver uma reconexão em andamento.
     restoreStreamMetadata(event);
   };
 
@@ -385,12 +465,12 @@ export default function Player() {
     lastWatchPositionRef.current = current;
 
     if (watchedSecondsRef.current >= 15) {
-      registerView();
+      void registerView();
     }
   };
 
   // =========================================
-  // VIDEO SEEKING
+  // SEEKING
   // =========================================
 
   const handleVideoSeeking = (event) => {
@@ -405,7 +485,7 @@ export default function Player() {
   };
 
   // =========================================
-  // VIDEO PAUSE
+  // PAUSE
   // =========================================
 
   const handleVideoPause = (event) => {
@@ -417,7 +497,7 @@ export default function Player() {
   };
 
   // =========================================
-  // VIDEO ENDED
+  // ENDED
   // =========================================
 
   const handleVideoEnded = () => {
@@ -448,9 +528,9 @@ export default function Player() {
     try {
       setFavoriteLoading(true);
 
-      const updatedMovie = await toggleFavorite(movie._id);
+      const result = await toggleFavorite(movie._id);
 
-      setFavorite(Boolean(updatedMovie.favorite));
+      setFavorite(Boolean(result.favorite));
     } catch (error) {
       console.error("[MiqFlix] Erro ao atualizar favorito", error);
     } finally {
@@ -459,11 +539,28 @@ export default function Player() {
   }
 
   // =========================================
+  // YOUTUBE SCROLL
+  // =========================================
+
+  useEffect(() => {
+    if (!youtubeRequested) return;
+
+    iframeRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [youtubeRequested]);
+
+  // =========================================
   // WATCH NOW / FULLSCREEN
   // =========================================
 
   async function handleWatchNow() {
-    if (isYoutube(movie)) {
+    if (!canPlay) return;
+
+    if (youtube) {
+      setYoutubeRequested(true);
+
       iframeRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "center",
@@ -474,27 +571,18 @@ export default function Player() {
 
     const video = videoRef.current;
 
-    if (!video) return;
+    if (!video || !sourceUrl) return;
 
-    // Solicita a reprodução sem aguardar.
-    // Isso permite solicitar o fullscreen
-    // durante a mesma interação do usuário.
     let playPromise;
 
     try {
+      // Mantém a reprodução e o fullscreen
+      // na mesma interação do usuário.
       playPromise = video.play();
     } catch (error) {
       console.error("[MiqFlix] Erro ao iniciar reprodução", error);
       return;
     }
-
-    // IMPORTANTE:
-    // Não aguardar video.play() antes de
-    // solicitar a tela cheia.
-    //
-    // Alguns navegadores exigem que
-    // requestFullscreen() seja chamado
-    // durante a ativação do usuário.
 
     if (!document.fullscreenElement) {
       try {
@@ -505,8 +593,6 @@ export default function Player() {
             console.warn("[MiqFlix] Tela cheia indisponível", error);
           });
         } else if (video.webkitEnterFullscreen) {
-          // Compatibilidade com alguns navegadores
-          // Safari / iOS.
           video.webkitEnterFullscreen();
         }
       } catch (error) {
@@ -556,19 +642,27 @@ export default function Player() {
 
       <div className="player-content">
         <div className="player-video-section">
-          {isYoutube(movie) ? (
-            <YoutubePlayer movie={movie} iframeRef={iframeRef} />
-          ) : (
+          {playbackError && (
+            <div className="player-error" role="alert">
+              {playbackError}
+            </div>
+          )}
+
+          {canPlay && youtube ? (
+            youtubeRequested ? (
+              <YoutubePlayer
+                title={movie.title}
+                embedUrl={playback.embedUrl}
+                iframeRef={iframeRef}
+              />
+            ) : (
+              <div className="video-shell">
+                <p>Clique em Assistir agora para iniciar o vídeo.</p>
+              </div>
+            )
+          ) : canPlay && sourceUrl ? (
             <div className="video-shell">
               <video
-                // IMPORTANTE:
-                // A chave não depende mais da URL.
-                //
-                // O recovery pode atualizar o src
-                // sem desmontar o elemento <video>.
-                //
-                // Isso ajuda a preservar o fullscreen
-                // durante as reconexões.
                 key={movie._id}
                 ref={videoRef}
                 src={streamUrl}
@@ -589,13 +683,16 @@ export default function Player() {
                 onEnded={handleVideoEnded}
               />
             </div>
-          )}
+          ) : !playbackError ? (
+            <div className="video-shell">
+              <p>Reprodução indisponível.</p>
+            </div>
+          ) : null}
 
-          {!isYoutube(movie) && (
+          {canPlay && !youtube && (
             <div className="player-progress-wrapper">
               <div className="player-progress-labels">
                 <span>Continuar assistindo</span>
-
                 <span>{Math.floor(progress)}%</span>
               </div>
 
@@ -629,7 +726,7 @@ export default function Player() {
                   {formatViews(movie.views)} views
                 </span>
 
-                {!isYoutube(movie) && (
+                {canPlay && !youtube && (
                   <span>
                     <Clock3 size={16} />
                     {formatDuration(duration)}
@@ -660,10 +757,11 @@ export default function Player() {
               type="button"
               className="watch-button"
               onClick={handleWatchNow}
+              disabled={!canPlay}
             >
               <Play size={18} />
 
-              {isYoutube(movie) ? "Ir para o vídeo" : "Assistir agora"}
+              {youtube ? "Ir para o vídeo" : "Assistir agora"}
             </button>
 
             <button type="button" className="secondary-button">

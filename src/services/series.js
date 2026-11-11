@@ -375,3 +375,23 @@ export async function addEpisodeView(
 
   return response.data;
 }
+
+
+export async function getSeriesEpisodePlayback(
+  seriesId,
+  seasonNumber,
+  episodeNumber,
+  options = {}
+) {
+  const { data } = await api.get(
+    `/series/${encodeURIComponent(seriesId)}` +
+      `/seasons/${encodeURIComponent(seasonNumber)}` +
+      `/episodes/${encodeURIComponent(episodeNumber)}` +
+      "/playback",
+    {
+      signal: options.signal,
+    }
+  );
+
+  return data;
+}

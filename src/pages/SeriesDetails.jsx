@@ -1,6 +1,12 @@
+
 import "./SeriesDetails.css";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { Link, useParams } from "react-router-dom";
 import { AlertCircle, ArrowLeft } from "lucide-react";
@@ -13,13 +19,136 @@ import SeriesHero from "../components/series-details/SeriesHero";
 import SeriesPlayer from "../components/series-details/SeriesPlayer";
 import SeriesSeasons from "../components/series-details/SeriesSeasons";
 
-import { getYouTubeEmbedUrl } from "../utils/youtube";
+import {
+  getSeriesEpisodePlayback,
+} from "../services/series";
+
+// =========================================
+// HELPERS
+// =========================================
+
+function getPlaybackError(error) {
+  const status = error?.response?.status;
+
+  if (status === 401) {
+    return "Faça login para assistir a este episódio.";
+  }
+
+  if (status === 403) {
+    return "É necessária uma assinatura ativa para assistir.";
+  }
+
+  if (status === 404) {
+    return "Episódio ou fonte de reprodução não encontrado.";
+  }
+
+  if (status === 422) {
+    return "Nenhuma fonte de reprodução está disponível.";
+  }
+
+  if (status === 503) {
+    return "Não foi possível verificar sua assinatura. Tente novamente.";
+  }
+
+  if (error?.message === "INVALID_PLAYBACK_RESPONSE") {
+    return "O servidor retornou dados de reprodução inválidos.";
+  }
+
+  return "Não foi possível preparar a reprodução.";
+}
+
+function resolveStreamUrl(streamPath) {
+  if (
+    typeof streamPath !== "string" ||
+    !streamPath.trim()
+  ) {
+    throw new Error("INVALID_PLAYBACK_RESPONSE");
+  }
+
+  const configuredBase = (
+    import.meta.env.VITE_API_URL || "/api"
+  ).replace(/\/+$/, "");
+
+  const apiBase = new URL(
+    `${configuredBase}/`,
+    window.location.origin
+  );
+
+  // Aceita caminhos como:
+  // /api/stream/series/...
+  // /stream/series/...
+  // stream/series/...
+  const path = streamPath.trim();
+
+  const relativePath = path.startsWith(apiBase.pathname)
+    ? path.slice(apiBase.pathname.length)
+    : path.replace(/^\/+/, "");
+
+  const resolved = new URL(
+    relativePath,
+    apiBase
+  );
+
+  // O streaming precisa permanecer na API
+  // configurada para esta aplicação.
+  if (
+    resolved.origin !== apiBase.origin ||
+    !resolved.pathname.startsWith(
+      `${apiBase.pathname}stream/`
+    )
+  ) {
+    throw new Error("INVALID_PLAYBACK_RESPONSE");
+  }
+
+  return resolved.toString();
+}
+
+function validateEmbedUrl(embedUrl) {
+  if (
+    typeof embedUrl !== "string" ||
+    !embedUrl.trim()
+  ) {
+    throw new Error("INVALID_PLAYBACK_RESPONSE");
+  }
+
+  let url;
+
+  try {
+    url = new URL(embedUrl);
+  } catch {
+    throw new Error("INVALID_PLAYBACK_RESPONSE");
+  }
+
+  const allowedHosts = new Set([
+    "www.youtube.com",
+    "www.youtube-nocookie.com",
+    "youtube.com",
+  ]);
+
+  if (
+    url.protocol !== "https:" ||
+    !allowedHosts.has(url.hostname) ||
+    !url.pathname.startsWith("/embed/")
+  ) {
+    throw new Error("INVALID_PLAYBACK_RESPONSE");
+  }
+
+  return url.toString();
+}
+
+// =========================================
+// SERIES DETAILS
+// =========================================
 
 export default function SeriesDetails() {
   const { id } = useParams();
 
   const playerRef = useRef(null);
   const restoredRef = useRef(false);
+
+  // Controle de requisições concorrentes.
+  const requestSequenceRef = useRef(0);
+  const requestControllerRef = useRef(null);
 
   // =========================================
   // SERIES
@@ -33,13 +162,9 @@ export default function SeriesDetails() {
     totalEpisodes,
     selection,
     currentEpisode,
-    playbackRequested,
-    playbackError,
-    setPlaybackError,
     expandedSeasons,
     toggleSeason,
     selectEpisode,
-    requestPlayback,
     registerView,
   } = useSeriesDetails(id);
 
@@ -47,42 +172,44 @@ export default function SeriesDetails() {
   // FAVORITES
   // =========================================
 
-  const { favorite, favoriteLoading, favoriteError, toggleFavorite } =
-    useSeriesFavorite(id);
+  const {
+    favorite,
+    favoriteLoading,
+    favoriteError,
+    toggleFavorite,
+  } = useSeriesFavorite(id);
 
   // =========================================
   // WATCH PROGRESS
   // =========================================
 
-  const { progress, loadingProgress, progressError, saveProgress } =
-    useWatchProgress(id);
+  const {
+    progress,
+    loadingProgress,
+    progressError,
+    saveProgress,
+  } = useWatchProgress(id);
 
   const [resumeTime, setResumeTime] = useState(0);
-  const [resumeEpisode, setResumeEpisode] = useState(null);
+  const [resumeEpisode, setResumeEpisode] =
+    useState(null);
 
   // =========================================
-  // STREAM URL
+  // AUTHORIZED PLAYBACK
   // =========================================
 
-  const streamUrl = useMemo(() => {
-    if (!playbackRequested || !currentEpisode?.videoUrl) {
-      return "";
-    }
+  const [playback, setPlayback] = useState(null);
 
-    // O YouTube deve ser reproduzido no iframe oficial,
-    // não via /stream.
-    if (getYouTubeEmbedUrl(currentEpisode.videoUrl)) {
-      return "";
-    }
+  const [
+    playbackRequested,
+    setPlaybackRequested,
+  ] = useState(false);
 
-    const baseUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
+  const [playbackLoading, setPlaybackLoading] =
+    useState(false);
 
-    if (!baseUrl) return "";
-
-    return (
-      `${baseUrl}/stream?page=` + encodeURIComponent(currentEpisode.videoUrl)
-    );
-  }, [playbackRequested, currentEpisode?.videoUrl]);
+  const [playbackError, setPlaybackError] =
+    useState("");
 
   // =========================================
   // SCROLL
@@ -106,6 +233,18 @@ export default function SeriesDetails() {
 
     setResumeTime(0);
     setResumeEpisode(null);
+
+    setPlayback(null);
+    setPlaybackError("");
+    setPlaybackRequested(false);
+    setPlaybackLoading(false);
+
+    return () => {
+      // Cancela qualquer autorização pendente
+      // ao trocar de série ou desmontar a página.
+      requestSequenceRef.current += 1;
+      requestControllerRef.current?.abort();
+    };
   }, [id]);
 
   // =========================================
@@ -128,26 +267,37 @@ export default function SeriesDetails() {
     if (!progress) return;
 
     const season = seasons.find(
-      (item) => item.seasonNumber === progress.seasonNumber,
+      (item) =>
+        item.seasonNumber ===
+        progress.seasonNumber
     );
 
     const episode = season?.episodes?.find(
-      (item) => item.episodeNumber === progress.episodeNumber,
+      (item) =>
+        item.episodeNumber ===
+        progress.episodeNumber
     );
 
     if (!episode) return;
 
-    selectEpisode(progress.seasonNumber, progress.episodeNumber);
+    selectEpisode(
+      progress.seasonNumber,
+      progress.episodeNumber
+    );
 
-    // Abre a temporada do episódio recuperado.
-    const isSeasonExpanded =
+    // Abre a temporada do episódio salvo.
+    const isExpanded =
       expandedSeasons instanceof Set
-        ? expandedSeasons.has(progress.seasonNumber)
+        ? expandedSeasons.has(
+            progress.seasonNumber
+          )
         : Array.isArray(expandedSeasons)
-          ? expandedSeasons.includes(progress.seasonNumber)
+          ? expandedSeasons.includes(
+              progress.seasonNumber
+            )
           : false;
 
-    if (!isSeasonExpanded) {
+    if (!isExpanded) {
       toggleSeason(progress.seasonNumber);
     }
 
@@ -158,7 +308,12 @@ export default function SeriesDetails() {
     });
 
     setResumeTime(
-      progress.completed ? 0 : Math.max(0, progress.currentTime || 0),
+      progress.completed
+        ? 0
+        : Math.max(
+            0,
+            Number(progress.currentTime) || 0
+          )
     );
   }, [
     loading,
@@ -172,6 +327,263 @@ export default function SeriesDetails() {
   ]);
 
   // =========================================
+  // REQUEST AUTHORIZED PLAYBACK
+  // =========================================
+
+  const requestAuthorizedPlayback = useCallback(
+    async (seasonNumber, episodeNumber) => {
+      // Invalida requisições anteriores.
+      const requestId =
+        ++requestSequenceRef.current;
+
+      requestControllerRef.current?.abort();
+
+      const controller = new AbortController();
+      requestControllerRef.current = controller;
+
+      // Não reutilizar fonte do episódio anterior.
+      setPlayback(null);
+      setPlaybackError("");
+      setPlaybackRequested(true);
+      setPlaybackLoading(true);
+
+      scrollToPlayer();
+
+      try {
+        const response =
+          await getSeriesEpisodePlayback(
+            id,
+            seasonNumber,
+            episodeNumber,
+            {
+              signal: controller.signal,
+            }
+          );
+
+        if (
+          controller.signal.aborted ||
+          requestId !== requestSequenceRef.current
+        ) {
+          return;
+        }
+
+        if (
+          response?.provider === "youtube"
+        ) {
+          const embedUrl = validateEmbedUrl(
+            response.embedUrl
+          );
+
+          setPlayback({
+            provider: "youtube",
+            embedUrl,
+            streamUrl: "",
+          });
+
+          return;
+        }
+
+        if (
+          response?.provider === "native"
+        ) {
+          const streamUrl = resolveStreamUrl(
+            response.streamPath
+          );
+
+          setPlayback({
+            provider: "native",
+            embedUrl: "",
+            streamUrl,
+          });
+
+          return;
+        }
+
+        throw new Error(
+          "INVALID_PLAYBACK_RESPONSE"
+        );
+      } catch (error) {
+        if (
+          controller.signal.aborted ||
+          requestId !== requestSequenceRef.current
+        ) {
+          return;
+        }
+
+        console.error(
+          "[SeriesDetails] Falha ao autorizar episódio:",
+          error
+        );
+
+        setPlayback(null);
+        setPlaybackError(
+          getPlaybackError(error)
+        );
+      } finally {
+        if (
+          requestId === requestSequenceRef.current &&
+          !controller.signal.aborted
+        ) {
+          setPlaybackLoading(false);
+        }
+      }
+    },
+    [id, scrollToPlayer]
+  );
+
+  // =========================================
+  // START EPISODE
+  // =========================================
+
+  const startEpisode = useCallback(
+    (
+      seasonNumber,
+      episodeNumber,
+      initialTime = 0
+    ) => {
+      const season = seasons.find(
+        (item) =>
+          item.seasonNumber === seasonNumber
+      );
+
+      const episode = season?.episodes?.find(
+        (item) =>
+          item.episodeNumber === episodeNumber
+      );
+
+      if (!episode) {
+        setPlaybackError(
+          "Episódio não encontrado."
+        );
+
+        return;
+      }
+
+      setResumeTime(
+        Math.max(
+          0,
+          Number(initialTime) || 0
+        )
+      );
+
+      selectEpisode(
+        seasonNumber,
+        episodeNumber
+      );
+
+      // Não verificamos episode.videoUrl.
+      // O backend é responsável por localizar
+      // e autorizar a fonte de reprodução.
+      void requestAuthorizedPlayback(
+        seasonNumber,
+        episodeNumber
+      );
+    },
+    [
+      seasons,
+      selectEpisode,
+      requestAuthorizedPlayback,
+    ]
+  );
+
+  // =========================================
+  // WATCH NOW / CONTINUE WATCHING
+  // =========================================
+
+  const handleWatchNow = useCallback(() => {
+    if (resumeEpisode) {
+      const season = seasons.find(
+        (item) =>
+          item.seasonNumber ===
+          resumeEpisode.seasonNumber
+      );
+
+      const episode = season?.episodes?.find(
+        (item) =>
+          item.episodeNumber ===
+          resumeEpisode.episodeNumber
+      );
+
+      if (episode) {
+        startEpisode(
+          resumeEpisode.seasonNumber,
+          resumeEpisode.episodeNumber,
+          resumeTime
+        );
+
+        return;
+      }
+    }
+
+    // Sem histórico: começa pelo primeiro
+    // episódio disponível da série.
+    const firstSeason = seasons
+      .filter(
+        (season) =>
+          season.seasonNumber > 0
+      )
+      .find(
+        (season) =>
+          season.episodes?.length > 0
+      );
+
+    const season =
+      firstSeason ||
+      seasons.find(
+        (item) =>
+          item.episodes?.length > 0
+      );
+
+    const episode = season?.episodes?.[0];
+
+    if (!episode) {
+      setPlaybackError(
+        "Esta série não possui episódios disponíveis."
+      );
+
+      scrollToPlayer();
+      return;
+    }
+
+    startEpisode(
+      season.seasonNumber,
+      episode.episodeNumber,
+      0
+    );
+  }, [
+    resumeEpisode,
+    resumeTime,
+    seasons,
+    startEpisode,
+    scrollToPlayer,
+  ]);
+
+  // =========================================
+  // SELECT EPISODE
+  // =========================================
+
+  const handleSelectEpisode = useCallback(
+    (seasonNumber, episodeNumber) => {
+      const isResumeEpisode =
+        resumeEpisode?.seasonNumber ===
+          seasonNumber &&
+        resumeEpisode?.episodeNumber ===
+          episodeNumber;
+
+      startEpisode(
+        seasonNumber,
+        episodeNumber,
+        isResumeEpisode ? resumeTime : 0
+      );
+    },
+    [
+      resumeEpisode,
+      resumeTime,
+      startEpisode,
+    ]
+  );
+
+  // =========================================
   // SAVE WATCH PROGRESS
   // =========================================
 
@@ -181,17 +593,28 @@ export default function SeriesDetails() {
         return;
       }
 
-      saveProgress({
-        seasonNumber: selection.seasonNumber,
-        episodeNumber: selection.episodeNumber,
-        currentTime,
-        duration,
-        completed,
-      }).catch((error) => {
-        console.error("[SeriesDetails] Erro ao salvar progresso:", error);
+      return Promise.resolve(
+        saveProgress({
+          seasonNumber:
+            selection.seasonNumber,
+          episodeNumber:
+            selection.episodeNumber,
+          currentTime,
+          duration,
+          completed,
+        })
+      ).catch((error) => {
+        console.error(
+          "[SeriesDetails] Erro ao salvar progresso:",
+          error
+        );
       });
     },
-    [selection, currentEpisode, saveProgress],
+    [
+      selection,
+      currentEpisode,
+      saveProgress,
+    ]
   );
 
   // =========================================
@@ -203,151 +626,15 @@ export default function SeriesDetails() {
       setPlaybackError(
         typeof message === "string"
           ? message
-          : "Não foi possível reproduzir este episódio.",
+          : "Não foi possível reproduzir este episódio."
       );
+
+      // Interrompe novas tentativas de
+      // reprodução após erro definitivo.
+      setPlayback(null);
+      setPlaybackRequested(false);
     },
-    [setPlaybackError],
-  );
-
-  // =========================================
-  // START PLAYBACK
-  // =========================================
-
-  const handlePlay = useCallback(() => {
-    if (!currentEpisode?.videoUrl) {
-      setPlaybackError(
-        "Este episódio não possui uma fonte de reprodução cadastrada.",
-      );
-
-      return;
-    }
-
-    setPlaybackError("");
-    requestPlayback();
-
-    scrollToPlayer();
-  }, [currentEpisode, setPlaybackError, requestPlayback, scrollToPlayer]);
-
-  // =========================================
-  // WATCH NOW / CONTINUE WATCHING
-  // =========================================
-
-  const handleWatchNow = useCallback(() => {
-    // Prioriza o último episódio assistido.
-    if (resumeEpisode) {
-      const season = seasons.find(
-        (item) => item.seasonNumber === resumeEpisode.seasonNumber,
-      );
-
-      const episode = season?.episodes?.find(
-        (item) => item.episodeNumber === resumeEpisode.episodeNumber,
-      );
-
-      if (episode) {
-        selectEpisode(resumeEpisode.seasonNumber, resumeEpisode.episodeNumber);
-
-        if (!episode.videoUrl) {
-          setPlaybackError(
-            "Este episódio não possui uma fonte de reprodução cadastrada.",
-          );
-
-          return;
-        }
-
-        setPlaybackError("");
-        requestPlayback();
-        scrollToPlayer();
-
-        return;
-      }
-    }
-
-    // Sem histórico: começa no primeiro episódio.
-    const firstSeason = seasons
-      .filter((season) => season.seasonNumber > 0)
-      .find((season) => season.episodes?.length > 0);
-
-    const season =
-      firstSeason || seasons.find((item) => item.episodes?.length > 0);
-
-    const episode = season?.episodes?.[0];
-
-    if (!episode) return;
-
-    setResumeTime(0);
-
-    selectEpisode(season.seasonNumber, episode.episodeNumber);
-
-    if (!episode.videoUrl) {
-      setPlaybackError(
-        "Este episódio não possui uma fonte de reprodução cadastrada.",
-      );
-
-      return;
-    }
-
-    setPlaybackError("");
-    requestPlayback();
-    scrollToPlayer();
-  }, [
-    resumeEpisode,
-    seasons,
-    selectEpisode,
-    setPlaybackError,
-    requestPlayback,
-    scrollToPlayer,
-  ]);
-
-  // =========================================
-  // SELECT EPISODE
-  // =========================================
-
-  const handleSelectEpisode = useCallback(
-    (seasonNumber, episodeNumber) => {
-      const season = seasons.find((item) => item.seasonNumber === seasonNumber);
-
-      const episode = season?.episodes?.find(
-        (item) => item.episodeNumber === episodeNumber,
-      );
-
-      if (!episode) {
-        setPlaybackError("Episódio não encontrado.");
-        return;
-      }
-
-      // Evita reutilizar o tempo de outro episódio.
-      const isResumeEpisode =
-        resumeEpisode?.seasonNumber === seasonNumber &&
-        resumeEpisode?.episodeNumber === episodeNumber;
-
-      if (!isResumeEpisode) {
-        setResumeTime(0);
-      }
-
-      selectEpisode(seasonNumber, episodeNumber);
-
-      if (!episode.videoUrl) {
-        setPlaybackError(
-          "Este episódio não possui uma fonte de reprodução cadastrada.",
-        );
-        return;
-      }
-
-      setPlaybackError("");
-
-      // Solicita a reprodução após selecionar o episódio.
-      requestPlayback();
-
-      scrollToPlayer();
-    },
-    [
-      seasons,
-      resumeEpisode,
-      selectEpisode,
-      requestPlayback,
-      setPlaybackError,
-      scrollToPlayer,
-    ],
+    []
   );
 
   // =========================================
@@ -371,9 +658,13 @@ export default function SeriesDetails() {
       <div className="series-details-error">
         <AlertCircle size={24} />
 
-        <p>{error || "Série não encontrada."}</p>
+        <p>
+          {error || "Série não encontrada."}
+        </p>
 
-        <Link to="/series">Voltar para séries</Link>
+        <Link to="/series">
+          Voltar para séries
+        </Link>
       </div>
     );
   }
@@ -387,7 +678,10 @@ export default function SeriesDetails() {
       <div className="series-details-backdrop">
         {(series.backdrop || series.poster) && (
           <img
-            src={series.backdrop || series.poster}
+            src={
+              series.backdrop ||
+              series.poster
+            }
             alt=""
             aria-hidden="true"
           />
@@ -397,7 +691,10 @@ export default function SeriesDetails() {
       <div className="series-details-overlay" />
 
       <div className="series-details-topbar">
-        <Link to="/series" className="series-back-button">
+        <Link
+          to="/series"
+          className="series-back-button"
+        >
           <ArrowLeft size={18} />
           Voltar
         </Link>
@@ -418,20 +715,39 @@ export default function SeriesDetails() {
       />
 
       {progressError && (
-        <p className="series-progress-error">{progressError}</p>
+        <p className="series-progress-error">
+          {progressError}
+        </p>
       )}
 
       <div ref={playerRef}>
+        {playbackLoading && (
+          <p
+            className="series-progress-error"
+            role="status"
+          >
+            Verificando acesso e preparando reprodução...
+          </p>
+        )}
+
         <SeriesPlayer
           episode={currentEpisode}
-          streamUrl={streamUrl}
-          playbackRequested={playbackRequested}
-          playbackError={playbackError}
+          streamUrl={
+            playback?.streamUrl || ""
+          }
+          embedUrl={
+            playback?.embedUrl || ""
+          }
+          playbackRequested={
+            playbackRequested
+          }
+          playbackError={
+            playbackError
+          }
           resumeTime={resumeTime}
           onProgress={handleSaveProgress}
           onStarted={registerView}
           onError={handlePlaybackError}
-          onPlay={handlePlay}
         />
       </div>
 
@@ -441,7 +757,9 @@ export default function SeriesDetails() {
         selection={selection}
         expandedSeasons={expandedSeasons}
         onToggleSeason={toggleSeason}
-        onSelectEpisode={handleSelectEpisode}
+        onSelectEpisode={
+          handleSelectEpisode
+        }
       />
     </div>
   );

@@ -152,3 +152,10 @@ export async function refreshMovieFromTMDB(
 
   return response.data;
 }
+export async function getMoviePlayback(id) {
+  const { data } = await api.get(
+    `/movies/${id}/playback`
+  );
+
+  return data;
+}
