@@ -40,6 +40,9 @@ function getPlaybackError(error) {
   if (error?.message === "INVALID_PLAYBACK_RESPONSE") {
     return "O servidor retornou dados de reprodução inválidos.";
   }
+  if (error?.message === "UNSUPPORTED_PLAYBACK_PROVIDER") {
+    return "A fonte cadastrada não possui uma rota de reprodução compatível. Verifique a configuração do backend.";
+  }
   return "Não foi possível preparar a reprodução.";
 }
 function invalidPlaybackResponse() {
@@ -111,26 +114,6 @@ function validateEmbedUrl(embedUrl) {
   }
   return url.toString();
 }
-function validateExternalUrl(watchUrl) {
-  if (typeof watchUrl !== "string" || !watchUrl.trim()) {
-    throw invalidPlaybackResponse();
-  }
-  let url;
-  try {
-    url = new URL(watchUrl);
-  } catch {
-    throw invalidPlaybackResponse();
-  }
-  if (
-    url.protocol !== "https:" ||
-    !url.hostname ||
-    url.username ||
-    url.password
-  ) {
-    throw invalidPlaybackResponse();
-  }
-  return url.toString();
-}
 function getYoutubeEmbedUrl(watchUrl) {
   let url;
   try {
@@ -154,12 +137,13 @@ function getYoutubeEmbedUrl(watchUrl) {
     ? `https://www.youtube.com/embed/${id}`
     : null;
 }
-// Compatibilidade temporária com a API antiga, que devolve { videoUrl }.
-// Páginas de terceiros nunca são enviadas ao player nativo.
+// Contrato aceito: streaming interno autorizado ou incorporação do YouTube.
+// Compatibilidade legada somente com URLs do YouTube.
 function normalizePlaybackResponse(payload) {
   const response = payload?.data?.provider || payload?.data?.videoUrl
     ? payload.data
     : payload;
+
   if (response?.provider === "native") {
     return {
       provider: "native",
@@ -167,6 +151,7 @@ function normalizePlaybackResponse(payload) {
       embedUrl: "",
     };
   }
+
   if (response?.provider === "youtube") {
     return {
       provider: "youtube",
@@ -174,22 +159,21 @@ function normalizePlaybackResponse(payload) {
       embedUrl: validateEmbedUrl(response.embedUrl),
     };
   }
-  if (response?.provider === "external") {
-    return {
-      provider: "external",
-      watchUrl: validateExternalUrl(response.watchUrl),
-      streamUrl: "",
-      embedUrl: "",
-    };
-  }
+
   if (!response?.provider && typeof response?.videoUrl === "string") {
-    const watchUrl = validateExternalUrl(response.videoUrl);
-    const embedUrl = getYoutubeEmbedUrl(watchUrl);
-    return embedUrl
-      ? { provider: "youtube", embedUrl: validateEmbedUrl(embedUrl), streamUrl: "" }
-      : { provider: "external", watchUrl, streamUrl: "", embedUrl: "" };
+    const embedUrl = getYoutubeEmbedUrl(response.videoUrl);
+    if (embedUrl) {
+      return {
+        provider: "youtube",
+        streamUrl: "",
+        embedUrl: validateEmbedUrl(embedUrl),
+      };
+    }
   }
-  throw invalidPlaybackResponse();
+
+  // Nunca passar páginas HTML externas para <video>.
+  // O backend deve fornecer uma rota interna válida para fontes nativas.
+  throw new Error("UNSUPPORTED_PLAYBACK_PROVIDER");
 }
 // =========================================
 // SERIES DETAILS
@@ -660,30 +644,17 @@ export default function SeriesDetails() {
             {playbackError}
           </p>
         )}
-        {playback?.provider === "external" ? (
-          <div className="series-progress-error" role="region" aria-label="Reprodução externa">
-            <p>Este episódio está disponível no site de origem. A reprodução não está integrada ao player do MiqFlix.</p>
-            <a
-              href={playback.watchUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Abrir no site de origem
-            </a>
-          </div>
-        ) : (
-          <SeriesPlayer
-            episode={currentEpisode}
-            streamUrl={playback?.streamUrl || ""}
-            embedUrl={playback?.embedUrl || ""}
-            playbackRequested={playbackRequested && !playbackLoading && Boolean(playback)}
-            playbackError={playbackError}
-            resumeTime={resumeTime}
-            onProgress={handleSaveProgress}
-            onStarted={registerView}
-            onError={handlePlaybackError}
-          />
-        )}
+        <SeriesPlayer
+          episode={currentEpisode}
+          streamUrl={playback?.streamUrl || ""}
+          embedUrl={playback?.embedUrl || ""}
+          playbackRequested={playbackRequested && !playbackLoading && Boolean(playback)}
+          playbackError={playbackError}
+          resumeTime={resumeTime}
+          onProgress={handleSaveProgress}
+          onStarted={registerView}
+          onError={handlePlaybackError}
+        />
       </div>
       <SeriesSeasons
         poster={series.poster}
