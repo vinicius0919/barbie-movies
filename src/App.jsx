@@ -79,7 +79,7 @@ export default function App() {
               <Route path="/admin/series" element={<SeriesManager />} />
             </Route>
           </Route>
-
+          <Route path="/admin/collections" element={<AdminCollectionsPage />} />
           {/* ================================
               PÁGINA NÃO ENCONTRADA
           ================================= */}

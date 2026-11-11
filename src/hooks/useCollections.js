@@ -5,8 +5,13 @@ import {
   useState,
 } from "react";
 
-import { getCollectionsCatalog } from "../services/collections";
+import {
+  getCollectionsCatalog,
+  getPublicCollectionConfigs,
+} from "../services/collections";
+
 import { buildCollections } from "../utils/buildCollections";
+import { mergeCollections } from "../utils/mergeCollections";
 
 export function useCollections() {
   const [catalog, setCatalog] = useState({
@@ -14,10 +19,12 @@ export function useCollections() {
     series: [],
   });
 
+  const [configs, setConfigs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [warnings, setWarnings] = useState([]);
-  const [requestVersion, setRequestVersion] = useState(0);
+  const [requestVersion, setRequestVersion] =
+    useState(0);
 
   useEffect(() => {
     let active = true;
@@ -28,33 +35,40 @@ export function useCollections() {
       setWarnings([]);
 
       try {
-        const data = await getCollectionsCatalog();
+        const [catalogData, savedConfigs] =
+          await Promise.all([
+            getCollectionsCatalog(),
+            getPublicCollectionConfigs(),
+          ]);
 
         if (!active) return;
 
         setCatalog({
-          movies: data.movies,
-          series: data.series,
+          movies: catalogData.movies,
+          series: catalogData.series,
         });
 
-        setWarnings(data.warnings);
+        setConfigs(savedConfigs);
+        setWarnings(catalogData.warnings);
       } catch (err) {
         if (!active) return;
 
         console.error(
-          "[Collections] Falha no carregamento:",
+          "[Collections] Falha:",
           err
         );
 
         setError(
           err.message ||
-            "Não foi possível carregar as coleções."
+          "Não foi possível carregar as coleções."
         );
 
         setCatalog({
           movies: [],
           series: [],
         });
+
+        setConfigs([]);
       } finally {
         if (active) {
           setLoading(false);
@@ -69,14 +83,19 @@ export function useCollections() {
     };
   }, [requestVersion]);
 
-  const collections = useMemo(
-    () =>
-      buildCollections(
-        catalog.movies,
-        catalog.series
-      ),
-    [catalog]
-  );
+  const collections = useMemo(() => {
+    const automatic = buildCollections(
+      catalog.movies,
+      catalog.series
+    );
+
+    return mergeCollections(
+      automatic,
+      configs,
+      catalog.movies,
+      catalog.series
+    );
+  }, [catalog, configs]);
 
   function reload() {
     setRequestVersion((value) => value + 1);

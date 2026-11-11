@@ -1,0 +1,464 @@
+
+.admin-collections {
+  min-height: 100vh;
+  padding: 32px 24px 64px;
+  color: #f8fafc;
+  background: #0b0d12;
+}
+
+.admin-collections-header {
+  max-width: 1440px;
+  margin: 0 auto 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.admin-collections-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #e50914;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.admin-collections-header h1 {
+  margin: 0 0 8px;
+  font-size: clamp(25px, 3vw, 36px);
+}
+
+.admin-collections-header p,
+.admin-collections-editor-heading p {
+  margin: 0;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.admin-collections-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: 24px;
+  max-width: 1440px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+.admin-collections-list,
+.admin-collections-editor {
+  background: #151820;
+  border: 1px solid #292e3a;
+  border-radius: 14px;
+  min-width: 0;
+}
+
+.admin-collections-list {
+  padding: 18px;
+}
+
+.admin-collections-list-header,
+.admin-collections-section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-collections-list-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.admin-collections-list-header span,
+.admin-collections-section-heading span {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.admin-collections-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  margin: 16px 0;
+  background: #0e1118;
+  border: 1px solid #303645;
+  border-radius: 9px;
+  color: #94a3b8;
+}
+
+.admin-collections-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #f8fafc;
+}
+
+.admin-collections-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  max-height: 650px;
+  overflow-y: auto;
+}
+
+.admin-collections-list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-collections-list-item:hover {
+  background: #222633;
+}
+
+.admin-collections-list-item.selected {
+  background: #2b1820;
+  border-color: #92313c;
+}
+
+.admin-collections-list-icon,
+.admin-collections-media-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  background: #262b37;
+  border-radius: 9px;
+  color: #cbd5e1;
+}
+
+.admin-collections-list-info,
+.admin-collections-media-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-collections-list-info strong,
+.admin-collections-media-info strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.admin-collections-list-info small,
+.admin-collections-media-info small {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.admin-collections-status {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.admin-collections-status.published {
+  background: #22c55e;
+}
+
+.admin-collections-status.draft {
+  background: #64748b;
+}
+
+.admin-collections-editor {
+  padding: 26px;
+}
+
+.admin-collections-editor-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.admin-collections-editor-heading h2 {
+  margin: 0 0 8px;
+  font-size: 23px;
+}
+
+.admin-collections-type {
+  padding: 6px 10px;
+  border-radius: 20px;
+  background: #262b37;
+  color: #cbd5e1;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.admin-collections-fields {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-collections-fields > label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-collections-fields input,
+.admin-collections-fields textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #303645;
+  border-radius: 9px;
+  outline: none;
+  background: #0e1118;
+  color: #f8fafc;
+  font: inherit;
+}
+
+.admin-collections-fields input:focus,
+.admin-collections-fields textarea:focus,
+.admin-collections-search:focus-within {
+  border-color: #e50914;
+}
+
+.admin-collections-cover {
+  width: 100%;
+  max-width: 400px;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #0e1118;
+}
+
+.admin-collections-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-collections-switches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin: 24px 0;
+}
+
+.admin-collections-switches label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #cbd5e1;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.admin-collections-switches input {
+  accent-color: #e50914;
+  width: 17px;
+  height: 17px;
+}
+
+.admin-collections-section {
+  padding-top: 22px;
+  margin-top: 24px;
+  border-top: 1px solid #303645;
+}
+
+.admin-collections-section h3 {
+  margin: 0 0 14px;
+  font-size: 16px;
+}
+
+.admin-collections-section p {
+  color: #94a3b8;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.admin-collections-selected,
+.admin-collections-media-results {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 14px 0 26px;
+}
+
+.admin-collections-media-results {
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.admin-collections-media-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: #1c202b;
+  border: 1px solid #303645;
+  border-radius: 9px;
+}
+
+.admin-collections-media-row button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 7px;
+  background: #303645;
+  color: #f8fafc;
+  cursor: pointer;
+}
+
+.admin-collections-media-row button:hover:not(:disabled) {
+  background: #454d5f;
+}
+
+.admin-collections-media-row button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.admin-collections-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 30px;
+  padding-top: 24px;
+  border-top: 1px solid #303645;
+}
+
+.admin-collections-primary,
+.admin-collections-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 9px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-collections-primary {
+  background: #e50914;
+}
+
+.admin-collections-primary:hover {
+  background: #c90812;
+}
+
+.admin-collections-danger {
+  background: #382028;
+  color: #fda4af;
+}
+
+.admin-collections-danger:hover {
+  background: #532833;
+}
+
+.admin-collections-primary:disabled,
+.admin-collections-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-collections-alert,
+.admin-collections-loading {
+  max-width: 1440px;
+  margin: 0 auto 18px;
+  padding: 14px 16px;
+  border-radius: 9px;
+  background: #222633;
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.admin-collections-alert.error {
+  background: #3a1e25;
+  color: #fda4af;
+}
+
+.admin-collections-alert.success {
+  background: #17382b;
+  color: #86efac;
+}
+
+.admin-collections-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-collections-empty {
+  padding: 18px 8px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.admin-collections .spinning {
+  animation: admin-collections-spin 1s linear infinite;
+}
+
+@keyframes admin-collections-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-collections-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-collections-list-items {
+    max-height: 280px;
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-collections {
+    padding: 20px 12px 40px;
+  }
+
+  .admin-collections-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-collections-editor {
+    padding: 18px;
+  }
+
+  .admin-collections-editor-heading {
+    flex-direction: column;
+  }
+
+  .admin-collections-actions button {
+    flex: 1;
+  }
+}
