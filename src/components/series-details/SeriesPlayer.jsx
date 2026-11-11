@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getYouTubeEmbedUrl } from "../../utils/youtube";
 
 const SAVE_INTERVAL_SECONDS = 15;
 
@@ -6,11 +7,12 @@ const STALL_TIMEOUT_MS = 20000;
 const CHECK_INTERVAL_MS = 2000;
 const MAX_RETRIES = 3;
 const STABLE_PLAYBACK_MS = 60000;
-import { getYouTubeEmbedUrl } from "../../utils/youtube";
+
 function createRecoveryState() {
   return {
     attempts: 0,
     recovering: false,
+    resumePending: false,
     wantsPlayback: false,
     ended: false,
     waitingSince: null,
@@ -138,6 +140,7 @@ export default function SeriesPlayer({
 
     state.attempts += 1;
     state.recovering = true;
+    state.resumePending = false;
 
     state.wantsPlayback = state.wantsPlayback || !video.paused;
 
@@ -333,12 +336,18 @@ export default function SeriesPlayer({
   };
 
   const handleSeeked = (event) => {
+    const video = event.currentTarget;
     const state = recoveryRef.current;
 
-    state.lastPosition = event.currentTarget.currentTime;
-
+    state.lastPosition = video.currentTime;
     state.lastProgressAt = Date.now();
     state.waitingSince = null;
+
+    // Após restaurar a posição,
+    // tenta retomar automaticamente.
+    if (state.recovering) {
+      void resumeRecoveredPlayback(video);
+    }
   };
 
   // =========================================
@@ -347,17 +356,15 @@ export default function SeriesPlayer({
 
   const handlePlay = (event) => {
     const video = event.currentTarget;
+    const state = recoveryRef.current;
 
-    onStarted?.();
-
-    // Durante a recuperação, não registra
-    // novamente o início do episódio.
-    if (recoveryRef.current.recovering) {
+    if (state.recovering) {
       return;
     }
 
-    recoveryRef.current.wantsPlayback = true;
+    state.wantsPlayback = true;
 
+    onStarted?.();
     persist(video);
   };
 
@@ -365,13 +372,17 @@ export default function SeriesPlayer({
     const video = event.currentTarget;
     const state = recoveryRef.current;
 
+    // Trocar o src durante o recovery pode disparar pause.
+    // Essa pausa interna não deve cancelar a retomada automática.
     if (state.recovering) {
       return;
     }
 
     state.wantsPlayback = false;
     state.waitingSince = null;
+    state.stableSince = null;
 
+    // Mantém o salvamento de progresso que existia antes da alteração.
     if (!video.ended) {
       persist(video);
     }
@@ -381,18 +392,37 @@ export default function SeriesPlayer({
   // CAN PLAY
   // =========================================
 
-  const handleCanPlay = async (event) => {
-    const video = event.currentTarget;
+  const handleCanPlay = (event) => {
+    void resumeRecoveredPlayback(event.currentTarget);
+  };
+
+  const resumeRecoveredPlayback = async (video) => {
     const state = recoveryRef.current;
 
-    if (!state.recovering || !state.wantsPlayback) {
+    if (
+      !video ||
+      video !== videoRef.current ||
+      !state.recovering ||
+      !state.wantsPlayback ||
+      state.resumePending ||
+      state.ended ||
+      video.seeking ||
+      state.pendingSeek !== null ||
+      !video.paused
+    ) {
       return;
     }
 
+    // Evita chamadas simultâneas de play() vindas de canplay e seeked.
+    state.resumePending = true;
+
     try {
       await video.play();
+      console.info("[SeriesPlayer] Reprodução retomada após recovery");
     } catch (error) {
-      console.warn("[SeriesPlayer] Reprodução automática indisponível", error);
+      console.warn("[SeriesPlayer] Autoplay de recuperação indisponível", error);
+    } finally {
+      state.resumePending = false;
     }
   };
 
@@ -429,6 +459,7 @@ export default function SeriesPlayer({
 
     state.ended = true;
     state.recovering = false;
+    state.resumePending = false;
     state.wantsPlayback = false;
     state.pendingSeek = null;
 
@@ -461,7 +492,7 @@ export default function SeriesPlayer({
         </div>
       ) : playbackRequested && streamUrl ? (
         <video
-          key={`${episodeKey}-${activeSource}`}
+          key={episodeKey}
           ref={videoRef}
           controls
           playsInline
