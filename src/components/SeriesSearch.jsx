@@ -43,15 +43,12 @@ export default function SeriesSearch({
     if (
       query.trim().length < 3
     ) {
-      setResults([]);
       return;
     }
 
     const timeout =
       setTimeout(async () => {
         try {
-          setLoading(true);
-
           const response =
             await searchTMDBSeries(
               query

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { authApi } from "../services/api";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { getRecoveryToken, clearRecoveryToken } from "../utils/recoveryToken";
 import "./AuthPage.css";
 

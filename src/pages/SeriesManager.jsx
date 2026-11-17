@@ -6,7 +6,6 @@ import { Plus, AlertCircle, Loader2 } from "lucide-react";
 
 import {
   getSeries,
-  getSeriesById,
   getAdminSeriesById,
   createSeries,
   updateSeries,
@@ -310,7 +309,6 @@ export default function SeriesManager() {
 
   const loadSeries = useCallback(async () => {
     try {
-      setFetching(true);
       setError("");
 
       const data = await getSeries();
@@ -337,8 +335,28 @@ export default function SeriesManager() {
   }, []);
 
   useEffect(() => {
-    loadSeries().catch(() => {});
-  }, [loadSeries]);
+    let cancelled = false;
+
+    async function loadInitialSeries() {
+      try {
+        const data = await getSeries();
+        if (cancelled) return;
+        setSeriesList(Array.isArray(data) ? data : []);
+      } catch (err) {
+        if (!cancelled) {
+          setError(getErrorMessage(err, "Não foi possível carregar as séries."));
+        }
+      } finally {
+        if (!cancelled) setFetching(false);
+      }
+    }
+
+    void loadInitialSeries();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // =========================================
   // NEW SERIES
@@ -517,7 +535,7 @@ export default function SeriesManager() {
       setModalError(message);
 
       // Let SeriesModal display the error.
-      throw new Error(message);
+      throw new Error(message, { cause: err });
     } finally {
       setLoading(false);
     }

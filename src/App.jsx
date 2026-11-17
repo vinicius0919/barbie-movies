@@ -29,6 +29,9 @@ import CheckoutReturn from "./pages/CheckoutReturn";
 
 import "./App.css";
 import AdminCollectionsPage from "./pages/AdminCollectionsPage";
+import AdminPlansPage from "./pages/AdminPlansPage";
+import AdminUsersPage from "./pages/AdminUsersPage";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
 
 export default function App() {
   return (
@@ -80,11 +83,14 @@ export default function App() {
 
             <Route element={<ProtectedRoute adminOnly />}>
               <Route path="/admin" element={<Admin />} />
+              <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
 
               <Route path="/admin/series" element={<SeriesManager />} />
+              <Route path="/admin/plans" element={<AdminPlansPage />} />
+              <Route path="/admin/users" element={<AdminUsersPage />} />
             </Route>
+            <Route path="/admin/collections" element={<AdminCollectionsPage />} />
           </Route>
-          <Route path="/admin/collections" element={<AdminCollectionsPage />} />
           {/* ================================
               PÁGINA NÃO ENCONTRADA
           ================================= */}

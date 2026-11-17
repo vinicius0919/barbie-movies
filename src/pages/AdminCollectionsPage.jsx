@@ -79,7 +79,6 @@ export default function AdminCollectionsPage() {
   const [mediaSearch, setMediaSearch] = useState("");
 
   const loadData = useCallback(async () => {
-    setLoading(true);
     try {
       const [savedConfigs, media] = await Promise.all([
         getAdminCollectionConfigs(),
@@ -101,8 +100,35 @@ export default function AdminCollectionsPage() {
   }, []);
 
   useEffect(() => {
-    void loadData();
-  }, [loadData]);
+    let cancelled = false;
+
+    async function loadInitialData() {
+      try {
+        const [savedConfigs, media] = await Promise.all([
+          getAdminCollectionConfigs(),
+          getAdminCollectionsMedia(),
+        ]);
+
+        if (cancelled) return;
+
+        setConfigs(savedConfigs);
+        setAdminMedia({
+          movies: Array.isArray(media.movies) ? media.movies : [],
+          series: Array.isArray(media.series) ? media.series : [],
+        });
+      } catch (err) {
+        if (!cancelled) setError(getErrorMessage(err));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    void loadInitialData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const mediaOptions = useMemo(() => {
     const all = [

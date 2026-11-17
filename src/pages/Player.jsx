@@ -1,6 +1,6 @@
 import "./Player.css";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Link, useParams } from "react-router-dom";
 
@@ -146,7 +146,7 @@ export default function Player() {
   // STREAM URL
   // =========================================
 
-  const sourceUrl = useMemo(() => {
+  const sourceUrl = (() => {
     if (!movie?._id || !playback?.streamPath || youtube) {
       return "";
     }
@@ -169,7 +169,7 @@ export default function Player() {
       `stream/movies/${encodeURIComponent(movie._id)}`,
       base,
     ).toString();
-  }, [movie?._id, playback?.streamPath, youtube]);
+  })();
 
   // =========================================
   // SILENT STREAM RECOVERY
@@ -292,15 +292,10 @@ export default function Player() {
       const parsed = JSON.parse(saved);
 
       const savedTime = Number(parsed.currentTime);
-      const savedPercentage = Number(parsed.percentage);
-
       if (Number.isFinite(savedTime) && savedTime >= 0) {
         resumePositionRef.current = savedTime;
       }
 
-      if (Number.isFinite(savedPercentage)) {
-        setProgress(Math.min(100, Math.max(0, savedPercentage)));
-      }
     } catch (error) {
       console.warn("[MiqFlix] Progresso inválido", error);
     }
@@ -363,7 +358,7 @@ export default function Player() {
   // COUNT VIEW
   // =========================================
 
-  const registerView = useCallback(async () => {
+  async function registerView() {
     if (
       !movie?._id ||
       hasCountedView.current ||
@@ -404,7 +399,7 @@ export default function Player() {
     } finally {
       viewInFlightRef.current = false;
     }
-  }, [movie?._id, viewStorageKey]);
+  }
 
   // =========================================
   // VIDEO METADATA

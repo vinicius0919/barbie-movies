@@ -1,5 +1,5 @@
 
-import { Clock3, Eye, Play } from "lucide-react";
+import { Clock3, Eye } from "lucide-react";
 
 import { formatViews } from "../../utils/seriesDetails";
 

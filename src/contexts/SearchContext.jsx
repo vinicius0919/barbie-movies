@@ -1,12 +1,8 @@
 import {
-  createContext,
-  useContext,
   useMemo,
   useState,
 } from "react";
-
-const SearchContext =
-  createContext(null);
+import { SearchContext } from "./searchContext";
 
 export function SearchProvider({
   children,
@@ -37,17 +33,4 @@ export function SearchProvider({
       {children}
     </SearchContext.Provider>
   );
-}
-
-export function useSearch() {
-  const context =
-    useContext(SearchContext);
-
-  if (!context) {
-    throw new Error(
-      "useSearch deve ser usado dentro do SearchProvider"
-    );
-  }
-
-  return context;
 }

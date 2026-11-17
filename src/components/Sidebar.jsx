@@ -2,7 +2,7 @@ import "./Sidebar.css";
 
 import { useEffect } from "react";
 
-import { Home, Settings, Tv, Heart, X, Layers3 } from "lucide-react";
+import { Home, Settings, Tv, Heart, X, Layers3, CreditCard, Users, LayoutDashboard } from "lucide-react";
 
 import { NavLink, useLocation } from "react-router-dom";
 
@@ -112,6 +112,15 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, user = null }) {
               </NavLink>
 
               <NavLink
+                to="/admin/dashboard"
+                className={getLinkClass}
+                onClick={closeSidebar}
+              >
+                <LayoutDashboard size={20} />
+                <span>Dashboard</span>
+              </NavLink>
+
+              <NavLink
                 to="/admin/series"
                 className={getLinkClass}
                 onClick={closeSidebar}
@@ -127,6 +136,24 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, user = null }) {
               >
                 <Layers3 size={20} />
                 <span>Gerenciar Coleções</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/plans"
+                className={getLinkClass}
+                onClick={closeSidebar}
+              >
+                <CreditCard size={20} />
+                <span>Gerenciar Planos</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/users"
+                className={getLinkClass}
+                onClick={closeSidebar}
+              >
+                <Users size={20} />
+                <span>Usuários e acesso</span>
               </NavLink>
             </>
           )}

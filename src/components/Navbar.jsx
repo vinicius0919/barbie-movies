@@ -3,7 +3,6 @@ import "./Navbar.css";
 import {
   Menu,
   Search,
-  UserRound,
   ChevronDown,
   CreditCard,
   LogOut,
@@ -17,8 +16,8 @@ import { useDebounce } from "use-debounce";
 
 import Miq from "./../assets/fada.png";
 
-import { useSearch } from "../contexts/SearchContext";
-import { useAuth } from "../contexts/AuthContext";
+import { useSearch } from "../hooks/useSearch";
+import { useAuth } from "../hooks/useAuth";
 import { GENRE_ROWS } from "../config/genres";
 
 export default function Navbar({ toggleSidebar }) {

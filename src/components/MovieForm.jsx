@@ -1,9 +1,22 @@
 import "./MovieForm.css";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createPortal } from "react-dom";
 import { RefreshCw, X, Plus } from "lucide-react";
 import { refreshMovieFromTMDB } from "../services/movies";
+
+function formFromMovie(movie) {
+  return {
+    title: movie?.title || "",
+    overview: movie?.overview || "",
+    poster: movie?.poster || "",
+    backdrop: movie?.backdrop || "",
+    year: movie?.year || "",
+    videoUrl: movie?.videoUrl || "",
+    tmdbId: movie?.tmdbId || "",
+    genres: movie?.genres || [],
+  };
+}
 
 export default function MovieForm({
   movie,
@@ -11,34 +24,16 @@ export default function MovieForm({
   onCancel,
   onRefresh,
 }) {
-  const [form, setForm] = useState({
-    title: "",
-    overview: "",
-    poster: "",
-    backdrop: "",
-    year: "",
-    videoUrl: "",
-    tmdbId: "",
-    genres: [],
-  });
+  const [form, setForm] = useState(() => formFromMovie(movie));
+  const [previousMovie, setPreviousMovie] = useState(movie);
+
+  if (previousMovie !== movie) {
+    setPreviousMovie(movie);
+    setForm(formFromMovie(movie));
+  }
 
   const [genreInput, setGenreInput] = useState("");
   const [loadingRefresh, setLoadingRefresh] = useState(false);
-
-  useEffect(() => {
-    if (movie) {
-      setForm({
-        title: movie.title || "",
-        overview: movie.overview || "",
-        poster: movie.poster || "",
-        backdrop: movie.backdrop || "",
-        year: movie.year || "",
-        videoUrl: movie.videoUrl || "",
-        tmdbId: movie.tmdbId || "",
-        genres: movie.genres || [],
-      });
-    }
-  }, [movie]);
 
   const handleChange = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));

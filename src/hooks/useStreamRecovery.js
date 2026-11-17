@@ -33,7 +33,8 @@ export default function useStreamRecovery({
   videoRef,
   sourceUrl,
 }) {
-  const [retryToken, setRetryToken] = useState(0);
+  const [retryState, setRetryState] = useState({ sourceUrl: null, token: 0 });
+  const retryToken = retryState.sourceUrl === sourceUrl ? retryState.token : 0;
 
   const stateRef = useRef(createRecoveryState());
   const sourceRef = useRef(sourceUrl);
@@ -42,7 +43,6 @@ export default function useStreamRecovery({
   useEffect(() => {
     sourceRef.current = sourceUrl;
     stateRef.current = createRecoveryState();
-    setRetryToken(0);
 
     return () => {
       if (retryTimerRef.current !== null) {
@@ -142,7 +142,7 @@ export default function useStreamRecovery({
           position: state.pendingSeek,
         });
 
-        setRetryToken(state.sourceGeneration);
+        setRetryState({ sourceUrl, token: state.sourceGeneration });
       }, delay);
     },
     [videoRef, sourceUrl]

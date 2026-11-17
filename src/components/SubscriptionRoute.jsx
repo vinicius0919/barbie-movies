@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
 
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { subscriptionApi } from "../services/api";
 
 import "./SubscriptionRoute.css";
@@ -12,6 +12,7 @@ export default function SubscriptionRoute() {
   const location = useLocation();
 
   const [status, setStatus] = useState("loading");
+  const [checkedUserId, setCheckedUserId] = useState(null);
   const [retryKey, setRetryKey] = useState(0);
 
   const userId = user?._id || user?.id || null;
@@ -27,25 +28,7 @@ export default function SubscriptionRoute() {
   useEffect(() => {
     let cancelled = false;
 
-    // Sem usuário autenticado.
-    if (!userId) {
-      setStatus("unauthorized");
-
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    // Administrador possui acesso total.
-    if (isAdmin) {
-      setStatus("allowed");
-
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    setStatus("loading");
+    if (!userId || isAdmin) return () => { cancelled = true; };
 
     async function checkSubscription() {
       try {
@@ -54,12 +37,14 @@ export default function SubscriptionRoute() {
         if (cancelled) return;
 
         setStatus(data.hasAccess === true ? "allowed" : "denied");
+        setCheckedUserId(userId);
       } catch (error) {
         if (cancelled) return;
 
         console.error("[SUBSCRIPTION ROUTE]", error);
 
         setStatus(error.response?.status === 401 ? "unauthorized" : "error");
+        setCheckedUserId(userId);
       }
     }
 
@@ -74,7 +59,15 @@ export default function SubscriptionRoute() {
   // UNAUTHORIZED
   // =========================================
 
-  if (!userId || status === "unauthorized") {
+  const effectiveStatus = !userId
+    ? "unauthorized"
+    : isAdmin
+      ? "allowed"
+      : checkedUserId !== userId
+        ? "loading"
+        : status;
+
+  if (effectiveStatus === "unauthorized") {
     return (
       <Navigate
         to="/login"
@@ -102,7 +95,7 @@ export default function SubscriptionRoute() {
   // LOADING
   // =========================================
 
-  if (status === "loading") {
+  if (effectiveStatus === "loading") {
     return (
       <main className="subscription-guard">
         <div className="subscription-guard-card">
@@ -120,7 +113,7 @@ export default function SubscriptionRoute() {
   // ERROR
   // =========================================
 
-  if (status === "error") {
+  if (effectiveStatus === "error") {
     return (
       <main className="subscription-guard">
         <div className="subscription-guard-card">
@@ -135,7 +128,10 @@ export default function SubscriptionRoute() {
 
           <button
             type="button"
-            onClick={() => setRetryKey((value) => value + 1)}
+            onClick={() => {
+              setStatus("loading");
+              setRetryKey((value) => value + 1);
+            }}
           >
             Tentar novamente
           </button>
@@ -152,7 +148,7 @@ export default function SubscriptionRoute() {
   // SUBSCRIPTION REQUIRED
   // =========================================
 
-  if (status === "denied") {
+  if (effectiveStatus === "denied") {
     return (
       <Navigate
         to={`/subscription?returnTo=${encodeURIComponent(returnTo)}`}

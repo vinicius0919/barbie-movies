@@ -16,12 +16,19 @@ import {
   HelpCircle,
 } from "lucide-react";
 
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { subscriptionApi } from "../services/api";
 
 // =============================================
 // UTILITÁRIOS
 // =============================================
+
+function hasControlCharacter(value) {
+  return [...value].some((character) => {
+    const code = character.charCodeAt(0);
+    return code <= 0x1f || code === 0x7f;
+  });
+}
 
 function normalizeReturnTo(value) {
   if (typeof value !== "string") return "/";
@@ -32,7 +39,7 @@ function normalizeReturnTo(value) {
     !path.startsWith("/") ||
     path.startsWith("//") ||
     path.includes("\\") ||
-    /[\u0000-\u001F\u007F]/.test(path) ||
+    hasControlCharacter(path) ||
     path.length > 1000
   ) {
     return "/";
@@ -241,15 +248,22 @@ function PlanCard({
             </div>
           )}
 
-          {benefits.map((benefit, index) => (
-            <div
-              key={`${index}-${benefit}`}
-              className="subscription-plan-detail"
-            >
-              <Check size={18} />
-              <span>{benefit}</span>
-            </div>
-          ))}
+          {benefits.length > 0 ? (
+            <ul className="subscription-benefits">
+              {benefits.map((benefit, index) => (
+                <li key={`${index}-${benefit}`}>
+                  <span className="benefit-icon" aria-hidden="true">
+                    ✓
+                  </span>
+                  <span>{benefit}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="subscription-benefits-empty">
+              Benefícios não informados para este plano.
+            </p>
+          )}
         </div>
 
         <div className="subscription-plan-bottom">
@@ -481,7 +495,7 @@ export default function SubscriptionPage() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, [user]);
 
   // =============================================
   // CHECKOUT

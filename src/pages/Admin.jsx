@@ -4,6 +4,7 @@ import {
   useEffect,
   useState,
   useCallback,
+  useRef,
 } from "react";
 
 import {
@@ -42,6 +43,11 @@ export default function Admin() {
 
   const [initialLoading, setInitialLoading] =
     useState(true);
+  const loadingRef = useRef(false);
+  const handleSearching = useCallback(
+    (value) => setSearching(value),
+    []
+  );
 
   /* =========================================
      LOAD MOVIES
@@ -53,10 +59,10 @@ export default function Admin() {
         currentPage = 1,
         reset = false
       ) => {
-        if (loading) return;
+        if (loadingRef.current) return;
 
         try {
-          setLoading(true);
+          loadingRef.current = true;
 
           const response =
             await getMovies(
@@ -80,15 +86,36 @@ export default function Admin() {
         } catch (error) {
           console.error(error);
         } finally {
+          loadingRef.current = false;
           setLoading(false);
           setInitialLoading(false);
         }
       },
-      [loading]
+      []
     );
 
   useEffect(() => {
-    loadMovies(1, true);
+    let cancelled = false;
+
+    async function loadInitialMovies() {
+      try {
+        const response = await getMovies(1, 20);
+        if (cancelled) return;
+
+        setMovies(response.data);
+        setHasMore(response.pagination.hasNextPage);
+      } catch (error) {
+        if (!cancelled) console.error(error);
+      } finally {
+        if (!cancelled) setInitialLoading(false);
+      }
+    }
+
+    void loadInitialMovies();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   /* =========================================
@@ -230,7 +257,7 @@ export default function Admin() {
           handleDelete
         }
         onSearching={
-          setSearching
+          handleSearching
         }
       />
 

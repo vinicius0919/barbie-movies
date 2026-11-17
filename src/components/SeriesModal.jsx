@@ -80,6 +80,20 @@ export default function SeriesModal({
   const [expandedSeasons, setExpandedSeasons] = useState([]);
   const [visibleEpisodeLists, setVisibleEpisodeLists] = useState([]);
   const [expandedEpisodes, setExpandedEpisodes] = useState([]);
+  const resetKey = open ? `${form?._id || "new"}:open` : "closed";
+  const [previousResetKey, setPreviousResetKey] = useState(resetKey);
+
+  if (previousResetKey !== resetKey) {
+    setPreviousResetKey(resetKey);
+    if (open) {
+      setError("");
+      setGenreInput("");
+      setShowGeneral(!form?._id);
+      setExpandedSeasons([]);
+      setVisibleEpisodeLists([]);
+      setExpandedEpisodes([]);
+    }
+  }
 
   const seasons = Array.isArray(form?.seasons)
     ? form.seasons
@@ -98,18 +112,6 @@ export default function SeriesModal({
   // =========================================
   // EFFECTS
   // =========================================
-
-  useEffect(() => {
-    if (!open) return;
-
-    setError("");
-    setGenreInput("");
-
-    setShowGeneral(!form?._id);
-    setExpandedSeasons([]);
-    setVisibleEpisodeLists([]);
-    setExpandedEpisodes([]);
-  }, [open, form?._id]);
 
   useEffect(() => {
     if (!open || loading) return;

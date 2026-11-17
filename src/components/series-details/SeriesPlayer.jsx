@@ -109,8 +109,7 @@ export default function SeriesPlayer({
   // STATE
   // =========================================
 
-  const [retryToken, setRetryToken] =
-    useState(0);
+  const [retryState, setRetryState] = useState({ episodeKey: null, token: 0 });
 
   // =========================================
   // IDENTIFICAÇÃO DO EPISÓDIO
@@ -121,6 +120,7 @@ export default function SeriesPlayer({
     `${episode?.seasonNumber ?? ""}-${
       episode?.episodeNumber ?? ""
     }`;
+  const retryToken = retryState.episodeKey === episodeKey ? retryState.token : 0;
 
   // =========================================
   // FONTES AUTORIZADAS
@@ -165,9 +165,9 @@ export default function SeriesPlayer({
     initialResumeTimeRef.current =
       normalizeResumeTime(resumeTime);
 
-    setRetryToken(0);
   }, [
     episodeKey,
+    resumeTime,
     streamUrl,
     embedUrl,
   ]);
@@ -388,9 +388,10 @@ export default function SeriesPlayer({
 
     // Atualiza apenas o src.
     // O elemento <video> permanece montado.
-    setRetryToken(
-      (previous) => previous + 1
-    );
+    setRetryState((previous) => ({
+      episodeKey,
+      token: previous.episodeKey === episodeKey ? previous.token + 1 : 1,
+    }));
   }, [
     canRenderPlayback,
     authorizedStreamUrl,

@@ -16,6 +16,7 @@ import {
 export default function useSeriesDetails(id) {
   const [series, setSeries] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadedId, setLoadedId] = useState(null);
   const [error, setError] = useState("");
 
   const [selection, setSelection] = useState(null);
@@ -29,23 +30,22 @@ export default function useSeriesDetails(id) {
     let cancelled = false;
 
     async function load() {
-      setLoading(true);
-      setError("");
-      setSeries(null);
-      setSelection(null);
-      setPlaybackRequested(false);
-      setPlaybackError("");
-      setExpandedSeasons({});
       countedViews.current = new Set();
 
       try {
         const data = await getSeriesById(id);
         if (cancelled) return;
 
+        setError("");
+        setPlaybackRequested(false);
+        setPlaybackError("");
+        setExpandedSeasons({});
+
         const first = findFirstEpisode(data.seasons);
 
         setSeries(data);
         setSelection(first);
+        setLoadedId(id);
 
         if (first) {
           setExpandedSeasons({
@@ -57,6 +57,7 @@ export default function useSeriesDetails(id) {
           setError(
             getApiError(err, "Não foi possível carregar a série.")
           );
+          setLoadedId(id);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -65,9 +66,6 @@ export default function useSeriesDetails(id) {
 
     if (id) {
       load();
-    } else {
-      setLoading(false);
-      setError("Identificador da série inválido.");
     }
 
     return () => {
@@ -135,7 +133,7 @@ export default function useSeriesDetails(id) {
     }));
   }, [series]);
 
-  const registerView = useCallback(async () => {
+  const registerView = async () => {
     if (!series?._id || !selection) return;
 
     const { seasonNumber, episodeNumber } = selection;
@@ -178,11 +176,11 @@ export default function useSeriesDetails(id) {
       countedViews.current.delete(key);
       console.error("Erro ao registrar visualização:", err);
     }
-  }, [series?._id, selection]);
+  };
 
   return {
     series,
-    loading,
+    loading: Boolean(id) && (loading || loadedId !== id),
     error,
     seasons,
     totalEpisodes,

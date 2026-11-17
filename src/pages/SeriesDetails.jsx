@@ -3,6 +3,7 @@ import "./SeriesDetails.css";
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -219,9 +220,45 @@ export default function SeriesDetails() {
     progressError,
     saveProgress,
   } = useWatchProgress(id);
-  const [resumeTime, setResumeTime] = useState(0);
-  const [resumeEpisode, setResumeEpisode] =
-    useState(null);
+  const resumeEpisode = useMemo(() => {
+    if (
+      loading ||
+      loadingProgress ||
+      !series ||
+      !Array.isArray(seasons) ||
+      !progress
+    ) {
+      return null;
+    }
+
+    const season = seasons.find(
+      (item) => item.seasonNumber === progress.seasonNumber
+    );
+    const episode = season?.episodes?.find(
+      (item) => item.episodeNumber === progress.episodeNumber
+    );
+
+    if (!episode) return null;
+
+    return {
+      seasonNumber: progress.seasonNumber,
+      episodeNumber: progress.episodeNumber,
+      title: episode.title,
+    };
+  }, [loading, loadingProgress, progress, seasons, series]);
+
+  const [manualResumeTime, setManualResumeTime] = useState(null);
+  const resumeTime = useMemo(
+    () =>
+      manualResumeTime !== null
+        ? manualResumeTime
+        : resumeEpisode && progress
+        ? progress.completed
+          ? 0
+          : Math.max(0, Number(progress.currentTime) || 0)
+        : 0,
+    [manualResumeTime, progress, resumeEpisode]
+  );
   // =========================================
   // AUTHORIZED PLAYBACK
   // =========================================
@@ -234,6 +271,16 @@ export default function SeriesDetails() {
     useState(false);
   const [playbackError, setPlaybackError] =
     useState("");
+  const [previousSeriesId, setPreviousSeriesId] = useState(id);
+
+  if (previousSeriesId !== id) {
+    setPreviousSeriesId(id);
+    setManualResumeTime(null);
+    setPlayback(null);
+    setPlaybackError("");
+    setPlaybackRequested(false);
+    setPlaybackLoading(false);
+  }
   // =========================================
   // SCROLL
   // =========================================
@@ -250,12 +297,6 @@ export default function SeriesDetails() {
   // =========================================
   useEffect(() => {
     restoredRef.current = false;
-    setResumeTime(0);
-    setResumeEpisode(null);
-    setPlayback(null);
-    setPlaybackError("");
-    setPlaybackRequested(false);
-    setPlaybackLoading(false);
     return () => {
       // Cancela qualquer autorização pendente
       // ao trocar de série ou desmontar a página.
@@ -298,19 +339,6 @@ export default function SeriesDetails() {
     if (!isExpanded) {
       toggleSeason(progress.seasonNumber);
     }
-    setResumeEpisode({
-      seasonNumber: progress.seasonNumber,
-      episodeNumber: progress.episodeNumber,
-      title: episode.title,
-    });
-    setResumeTime(
-      progress.completed
-        ? 0
-        : Math.max(
-            0,
-            Number(progress.currentTime) || 0
-          )
-    );
   }, [
     loading,
     loadingProgress,
@@ -404,7 +432,7 @@ export default function SeriesDetails() {
         );
         return;
       }
-      setResumeTime(
+      setManualResumeTime(
         Math.max(
           0,
           Number(initialTime) || 0

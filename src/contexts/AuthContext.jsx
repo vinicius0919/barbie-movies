@@ -1,14 +1,8 @@
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { useEffect, useState } from "react";
 
 import { authApi } from "../services/api";
-
-const AuthContext = createContext(null);
+import { AuthContext } from "./authContext";
 
 // Compartilha a verificação inicial entre montagens
 // simultâneas, inclusive no StrictMode.
@@ -36,7 +30,6 @@ function getInitialSession() {
 
   return pendingSessionRequest;
 }
-
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -104,16 +97,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error(
-      "useAuth deve ser utilizado dentro de AuthProvider"
-    );
-  }
-
-  return context;
 }

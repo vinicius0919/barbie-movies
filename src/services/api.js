@@ -213,4 +213,88 @@ export const subscriptionApi = {
   },
 };
 
+export const adminPlansApi = {
+  async list() {
+    const { data } = await api.get("/admin/subscriptions/plans");
+    return data;
+  },
+
+  async get(id) {
+    const { data } = await api.get(`/admin/subscriptions/plans/${encodeURIComponent(id)}`);
+    return data;
+  },
+  async create(payload) {
+    const { data } = await api.post("/admin/subscriptions/plans", payload);
+    return data;
+  },
+
+  async update(id, payload) {
+    const { data } = await api.patch(`/admin/subscriptions/plans/${encodeURIComponent(id)}`, payload);
+    return data;
+  },
+
+  async activate(id) {
+    const { data } = await api.post(`/admin/subscriptions/plans/${encodeURIComponent(id)}/activate`);
+    return data;
+  },
+
+  async deactivate(id) {
+    const { data } = await api.post(`/admin/subscriptions/plans/${encodeURIComponent(id)}/deactivate`);
+    return data;
+  },
+
+  async archive(id) {
+    const { data } = await api.post(`/admin/subscriptions/plans/${encodeURIComponent(id)}/archive`);
+    return data;
+  },
+
+  async duplicate(id) {
+    const { data } = await api.post(`/admin/subscriptions/plans/${encodeURIComponent(id)}/duplicate`);
+    return data;
+  },
+
+  async reorder(items) {
+    const { data } = await api.patch("/admin/subscriptions/plans/reorder", { items });
+    return data;
+  },
+};
+
+export const adminDashboardApi = {
+  async metrics(params = {}) {
+    const { data } = await api.get("/admin/subscriptions/dashboard", { params });
+    return data;
+  },
+};
+
+export const adminUsersApi = {
+  async list(params = {}) {
+    const { data } = await api.get("/admin/subscriptions/users", { params });
+    return data;
+  },
+  async get(id) {
+    const { data } = await api.get(`/admin/subscriptions/users/${encodeURIComponent(id)}`);
+    return data;
+  },
+  async accessHistory(id) {
+    const { data } = await api.get(`/admin/subscriptions/users/${encodeURIComponent(id)}/access-history`);
+    return data;
+  },
+  async extend(id, payload) {
+    const { data } = await api.post(`/admin/subscriptions/users/${encodeURIComponent(id)}/access/extend`, payload);
+    return data;
+  },
+  async setExpiration(id, payload) {
+    const { data } = await api.post(`/admin/subscriptions/users/${encodeURIComponent(id)}/access/set-expiration`, payload);
+    return data;
+  },
+  async grant(id, payload) {
+    const { data } = await api.post(`/admin/subscriptions/users/${encodeURIComponent(id)}/access/grant`, payload);
+    return data;
+  },
+  async revokeGrant(userId, grantId, payload) {
+    const { data } = await api.post(`/admin/subscriptions/users/${encodeURIComponent(userId)}/access/grants/${encodeURIComponent(grantId)}/revoke`, payload);
+    return data;
+  },
+};
+
 export default api;

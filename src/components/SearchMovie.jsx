@@ -63,7 +63,7 @@ export default function SearchMovie({
 
   useEffect(() => {
     onSearching?.(hasSearch);
-  }, [hasSearch]);
+  }, [hasSearch, onSearching]);
 
   async function handleSearch(
     currentPage = 1

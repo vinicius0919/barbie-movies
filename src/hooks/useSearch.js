@@ -1,0 +1,8 @@
+import { useContext } from "react";
+import { SearchContext } from "../contexts/searchContext";
+
+export function useSearch() {
+  const context = useContext(SearchContext);
+  if (!context) throw new Error("useSearch deve ser utilizado dentro de SearchProvider");
+  return context;
+}

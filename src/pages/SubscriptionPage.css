@@ -342,6 +342,42 @@
   overflow-wrap: anywhere;
 }
 
+.subscription-benefits {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.subscription-benefits li {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  color: #d4d4dc;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.subscription-benefits li > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.benefit-icon {
+  flex-shrink: 0;
+  color: var(--subscription-success);
+  font-weight: 700;
+}
+
+.subscription-benefits-empty {
+  margin: 0;
+  color: var(--subscription-muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
 /* ==========================================
    PLAN ACTIONS
 ========================================== */

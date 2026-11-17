@@ -12,13 +12,20 @@ const MAX_ATTEMPTS = 10;
 const RETRY_DELAY = 3000;
 const REDIRECT_DELAY = 2000;
 
+function hasControlCharacter(value) {
+  return [...value].some((character) => {
+    const code = character.charCodeAt(0);
+    return code <= 0x1f || code === 0x7f;
+  });
+}
+
 function safeReturnPath(value) {
   if (
     typeof value !== "string" ||
     !value.startsWith("/") ||
     value.startsWith("//") ||
     value.includes("\\") ||
-    /[\u0000-\u001F\u007F]/.test(value)
+    hasControlCharacter(value)
   ) {
     return "/";
   }
@@ -137,10 +144,6 @@ export default function CheckoutReturn() {
       }
     }
 
-    setStatus("checking");
-    setAttempt(0);
-    setErrorMessage("");
-
     verify();
 
     return () => {
@@ -150,6 +153,9 @@ export default function CheckoutReturn() {
   }, [subscriptionId, retryKey, navigate, returnTo]);
 
   function retry() {
+    setStatus("checking");
+    setAttempt(0);
+    setErrorMessage("");
     setRetryKey((value) => value + 1);
   }
 

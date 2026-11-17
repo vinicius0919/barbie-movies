@@ -1,10 +1,6 @@
 import "./Home.css";
 
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import MovieRow from "../components/MovieRow";
 
@@ -16,7 +12,7 @@ import {
 
 import {
   useSearch,
-} from "../contexts/SearchContext";
+} from "../hooks/useSearch";
 
 export default function Home() {
 
@@ -32,47 +28,43 @@ export default function Home() {
     useState([]);
 
   const [loading, setLoading] =
-    useState(false);
+    useState(true);
 
   /* =========================================
      LOAD HOME
   ========================================= */
-
-  async function loadHome() {
-    try {
-      setLoading(true);
-
-      const response =
-        await getHome({
-          search,
-          genre: genreFilter,
-        });
-
-      setRows(
-        response.rows || []
-      );
-
-      setFeatured(
-        response.featured || []
-      );
-
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   /* =========================================
      RELOAD ON FILTER CHANGE
   ========================================= */
 
   useEffect(() => {
-    loadHome();
-  }, [
-    search,
-    genreFilter,
-  ]);
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const response = await getHome({
+          search,
+          genre: genreFilter,
+        });
+
+        if (cancelled) return;
+
+        setRows(response.rows || []);
+        setFeatured(response.featured || []);
+      } catch (error) {
+        if (!cancelled) console.error(error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [genreFilter, search]);
 
   /* =========================================
      ALL MOVIES

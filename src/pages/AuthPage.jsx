@@ -2,7 +2,7 @@ import "./AuthPage.css";
 import { useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 
 export default function AuthPage({ mode = "login" }) {
   const isRegister = mode === "register";
