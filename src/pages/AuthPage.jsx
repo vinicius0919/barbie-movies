@@ -102,6 +102,8 @@ export default function AuthPage({ mode = "login" }) {
           {submitting ? "Aguarde..." : isRegister ? "Criar conta" : "Entrar"}
         </button>
 
+        {!isRegister && <p><Link to="/forgot-password">Esqueci minha senha</Link></p>}
+
         <p>
           {isRegister ? "Já possui uma conta?" : "Ainda não possui uma conta?"}{" "}
           <Link to={isRegister ? "/login" : "/register"}>

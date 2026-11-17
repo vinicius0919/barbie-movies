@@ -348,3 +348,6 @@
     animation-duration: 0.01ms !important;
   }
 }
+
+.miqflix-auth-card .recovery-success { color: #a7f3d0; }
+.miqflix-auth-card > .recovery-toggle { background: transparent; border-color: var(--auth-border); font-size: .9rem; }

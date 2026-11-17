@@ -23,6 +23,7 @@ import Admin from "./pages/Admin";
 
 // Autenticação e assinaturas
 import AuthPage from "./pages/AuthPage";
+import PasswordRecoveryPage from "./pages/PasswordRecoveryPage";
 import SubscriptionPage from "./pages/SubscriptionPage";
 import CheckoutReturn from "./pages/CheckoutReturn";
 
@@ -41,6 +42,9 @@ export default function App() {
           <Route path="/" element={<Home />} />
 
           <Route path="/login" element={<AuthPage mode="login" />} />
+
+          <Route path="/forgot-password" element={<PasswordRecoveryPage key="forgot" />} />
+          <Route path="/reset-password" element={<PasswordRecoveryPage key="reset" mode="reset" />} />
 
           <Route path="/register" element={<AuthPage mode="register" />} />
 

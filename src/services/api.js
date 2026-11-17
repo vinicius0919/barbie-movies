@@ -45,7 +45,8 @@ api.interceptors.response.use(
 
     if (
       import.meta.env.DEV &&
-      !expectedUnauthorized
+      !expectedUnauthorized &&
+      !["/auth/forgot-password", "/auth/reset-password"].includes(error.config?.url)
     ) {
       console.error("[MIQFLIX API ERROR]", {
         url: error.config
@@ -95,6 +96,14 @@ api.interceptors.response.use(
 // =============================================
 
 export const authApi = {
+  async forgotPassword(email) {
+    const { data } = await api.post("/auth/forgot-password", { email });
+    return data;
+  },
+  async resetPassword(token, password) {
+    const { data } = await api.post("/auth/reset-password", { token, password });
+    return data;
+  },
   async me() {
     const { data } = await api.get("/auth/me");
     return data;
