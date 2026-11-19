@@ -2,7 +2,7 @@ import "./Sidebar.css";
 
 import { useEffect } from "react";
 
-import { Home, Settings, Tv, Heart, X, Layers3, CreditCard, Users, LayoutDashboard } from "lucide-react";
+import { Home, Settings, Tv, Heart, X, Layers3, CreditCard, Users, LayoutDashboard, FileInput } from "lucide-react";
 
 import { NavLink, useLocation } from "react-router-dom";
 
@@ -154,6 +154,15 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, user = null }) {
               >
                 <Users size={20} />
                 <span>Usuários e acesso</span>
+              </NavLink>
+
+              <NavLink
+                to="/admin/imports"
+                className={getLinkClass}
+                onClick={closeSidebar}
+              >
+                <FileInput size={20} />
+                <span>Importar conteúdos</span>
               </NavLink>
             </>
           )}

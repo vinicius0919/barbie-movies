@@ -1,7 +1,7 @@
 .navbar {
   position: sticky;
   top: 0;
-  z-index: 90;
+  z-index: var(--z-navbar, 90);
 
   width: 100%;
   display: flex;
@@ -27,7 +27,7 @@
   overflow: visible;
 }
 .navbar-account-dropdown {
-  z-index: 1000;
+  z-index: var(--z-popover, 1000);
   isolation: isolate;
 }
 

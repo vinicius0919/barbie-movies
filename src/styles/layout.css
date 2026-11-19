@@ -1,3 +1,14 @@
+:root {
+  --z-content: 1;
+  --z-navbar: 90;
+  --z-sidebar-backdrop: 998;
+  --z-sidebar: 999;
+  --z-popover: 1000;
+  --z-modal-backdrop: 1100;
+  --z-modal: 1110;
+  --z-modal-popover: 1120;
+}
+
 .main-layout {
     width: 100%;
     min-height: 100vh;

@@ -32,6 +32,7 @@ import AdminCollectionsPage from "./pages/AdminCollectionsPage";
 import AdminPlansPage from "./pages/AdminPlansPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
+import AdminContentImportsPage from "./pages/AdminContentImportsPage";
 
 export default function App() {
   return (
@@ -88,6 +89,7 @@ export default function App() {
               <Route path="/admin/series" element={<SeriesManager />} />
               <Route path="/admin/plans" element={<AdminPlansPage />} />
               <Route path="/admin/users" element={<AdminUsersPage />} />
+              <Route path="/admin/imports" element={<AdminContentImportsPage />} />
             </Route>
             <Route path="/admin/collections" element={<AdminCollectionsPage />} />
           </Route>
